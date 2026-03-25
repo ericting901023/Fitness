@@ -174,7 +174,7 @@
   .tab-icon { font-size: 16px; }
 
   /* ── CONTENT ── */
-  .content { padding: 20px; max-width: 800px; margin: 0 auto; padding-bottom: 60px; }
+  .content { padding: 20px; max-width: 980px; margin: 0 auto; padding-bottom: 60px; }
   .panel { display: none; }
   .panel.active { display: block; }
 
@@ -242,7 +242,7 @@
   /* ── STAT GRID ── */
   .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
   .stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; text-align: center; }
-  .stat-value { font-size: 22px; font-weight: 700; font-family: 'Space Mono', monospace; }
+  .stat-value { font-size: 26px; font-weight: 700; font-family: 'Space Mono', monospace; }
   .stat-label { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
   .stat-unit { font-size: 12px; color: var(--text-dim); font-weight: 400; }
 
@@ -272,7 +272,7 @@
   .nutrient-badge.cal { border-color: rgba(110,231,183,0.4); color: var(--accent); }
   .nutrition-totals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
   .total-card { background: var(--surface2); border-radius: 10px; padding: 12px; text-align: center; border: 1px solid var(--border); }
-  .total-num { font-size: 20px; font-weight: 700; font-family: 'Space Mono', monospace; }
+  .total-num { font-size: 22px; font-weight: 700; font-family: 'Space Mono', monospace; }
   .total-label { font-size: 11px; color: var(--text-dim); }
   .total-cal .total-num { color: var(--accent); }
   .total-protein .total-num { color: #fb923c; }
@@ -337,7 +337,7 @@
   /* ── CHARTS ── */
   .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
   .chart-title { font-size: 13px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
-  .chart-wrap { position: relative; height: 200px; }
+  .chart-wrap { position: relative; height: 280px; }
   .chart-tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
   .chart-tab { padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font-size: 12px; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; transition: all 0.2s; }
   .chart-tab.active { background: var(--accent2); border-color: var(--accent2); color: #0d1117; font-weight: 600; }
@@ -377,13 +377,48 @@
     border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
   }
   .mini-chart-title { font-size: 11px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
-  .mini-chart-wrap { position: relative; height: 120px; }
+  .mini-chart-wrap { position: relative; height: 160px; }
   .mini-chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
 
   /* ── EDIT BUTTON ── */
   .btn-edit { background: rgba(56,189,248,0.1); color: var(--accent2); border: 1px solid rgba(56,189,248,0.3); }
   .btn-edit:hover { background: rgba(56,189,248,0.2); }
   .action-btns { display: flex; gap: 6px; }
+
+
+  /* ── NUTRIENT TARGETS ── */
+  .nutrient-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+  .nutrient-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; }
+  .nutrient-box-label { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
+  .nutrient-box-current { font-size: 20px; font-weight: 700; font-family: 'Space Mono', monospace; }
+  .nutrient-box-target { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .nutrient-box-remain { font-size: 12px; font-weight: 600; margin-top: 4px; }
+  .remain-ok { color: var(--accent); }
+  .remain-over { color: var(--danger); }
+  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+
+  /* ── FOOD LIBRARY ── */
+  .food-library { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .food-lib-btn { padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface2); color: var(--accent2); font-size: 12px; cursor: pointer; font-family: 'Noto Sans TC', sans-serif; transition: all 0.15s; white-space: nowrap; }
+  .food-lib-btn:hover { border-color: var(--accent2); background: rgba(56,189,248,0.1); }
+  .food-lib-btn .del-lib { margin-left: 4px; color: var(--danger); font-size: 10px; }
+
+  /* ── AI DIET PLAN SECTION (same page as nutrition) ── */
+  .ai-plan-card { background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.08)); border: 1px solid rgba(99,102,241,0.3); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .ai-plan-title { font-size: 15px; font-weight: 700; color: #a78bfa; margin-bottom: 12px; }
+  .ai-plan-text { font-size: 13px; line-height: 1.8; white-space: pre-wrap; color: var(--text); }
+
+  /* ── APPLY PLAN BUTTON ── */
+  .btn-apply { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; font-size: 12px; padding: 6px 14px; }
+
+  /* ── QUERY STATUS ── */
+  .query-status { font-size: 12px; color: var(--accent2); padding: 6px 0; display: none; }
+  .query-status.visible { display: block; }
+
+  @media(max-width: 600px) {
+    .nutrient-grid { grid-template-columns: repeat(2,1fr); }
+  }
 
   @media(max-width: 480px) {
     .stat-grid { grid-template-columns: repeat(2, 1fr); }
@@ -451,18 +486,6 @@
         <div class="stat-card"><div class="stat-value" id="stat-evening">—</div><div class="stat-label">睡前體重 <span class="stat-unit">kg</span></div></div>
         <div class="stat-card"><div class="stat-value" id="stat-waist">—</div><div class="stat-label">腰圍 <span class="stat-unit">cm</span></div></div>
       </div>
-      <!-- Mini charts -->
-      <div class="mini-chart-row">
-        <div class="mini-chart-card">
-          <div class="mini-chart-title">⚖️ 體重（近14天）</div>
-          <div class="mini-chart-wrap"><canvas id="mini-weight"></canvas></div>
-        </div>
-        <div class="mini-chart-card">
-          <div class="mini-chart-title">📏 腰圍（近14天）</div>
-          <div class="mini-chart-wrap"><canvas id="mini-waist"></canvas></div>
-        </div>
-      </div>
-
       <div class="card">
         <div class="card-header"><div class="card-title">新增紀錄</div></div>
         <div class="date-row">
@@ -489,36 +512,102 @@
       <div class="date-row">
         <div class="form-group" style="flex:1"><label>查看日期</label><input type="date" id="nutrition-date" onchange="renderNutritionDay()"></div>
       </div>
-      <div class="nutrition-totals">
-        <div class="total-card total-cal"><div class="total-num" id="total-cal">0</div><div class="total-label">卡路里 kcal</div></div>
-        <div class="total-card total-protein"><div class="total-num" id="total-protein">0g</div><div class="total-label">蛋白質</div></div>
-        <div class="total-card total-carb"><div class="total-num" id="total-carb">0g</div><div class="total-label">碳水化合物</div></div>
-        <div class="total-card total-fat"><div class="total-num" id="total-fat">0g</div><div class="total-label">脂肪</div></div>
-      </div>
-      <div class="mini-chart-card">
-        <div class="mini-chart-title">🔥 熱量趨勢（近14天）</div>
-        <div class="mini-chart-wrap"><canvas id="mini-cal"></canvas></div>
+
+      <!-- Nutrient Targets (set by AI, shows current vs target vs remaining) -->
+      <div class="nutrient-grid">
+        <div class="nutrient-box">
+          <div class="nutrient-box-label">🔥 熱量 kcal</div>
+          <div class="nutrient-box-current total-cal-color" id="nt-cal-cur">0</div>
+          <div class="nutrient-box-target">目標：<span id="nt-cal-tgt">—</span></div>
+          <div class="nutrient-box-remain" id="nt-cal-rem"></div>
+          <div class="progress-bar"><div class="progress-fill" id="nt-cal-bar" style="width:0%;background:#6ee7b7"></div></div>
+        </div>
+        <div class="nutrient-box">
+          <div class="nutrient-box-label">💪 蛋白質 g</div>
+          <div class="nutrient-box-current" id="nt-p-cur" style="color:#fb923c">0</div>
+          <div class="nutrient-box-target">目標：<span id="nt-p-tgt">—</span></div>
+          <div class="nutrient-box-remain" id="nt-p-rem"></div>
+          <div class="progress-bar"><div class="progress-fill" id="nt-p-bar" style="width:0%;background:#fb923c"></div></div>
+        </div>
+        <div class="nutrient-box">
+          <div class="nutrient-box-label">⚡ 碳水 g</div>
+          <div class="nutrient-box-current" id="nt-c-cur" style="color:#38bdf8">0</div>
+          <div class="nutrient-box-target">目標：<span id="nt-c-tgt">—</span></div>
+          <div class="nutrient-box-remain" id="nt-c-rem"></div>
+          <div class="progress-bar"><div class="progress-fill" id="nt-c-bar" style="width:0%;background:#38bdf8"></div></div>
+        </div>
+        <div class="nutrient-box">
+          <div class="nutrient-box-label">🫙 脂肪 g</div>
+          <div class="nutrient-box-current" id="nt-f-cur" style="color:#f472b6">0</div>
+          <div class="nutrient-box-target">目標：<span id="nt-f-tgt">—</span></div>
+          <div class="nutrient-box-remain" id="nt-f-rem"></div>
+          <div class="progress-bar"><div class="progress-fill" id="nt-f-bar" style="width:0%;background:#f472b6"></div></div>
+        </div>
       </div>
 
+      <!-- AI Diet Plan (shown after AI analysis) -->
+      <div class="ai-plan-card" id="ai-diet-plan-card" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div class="ai-plan-title">🤖 AI 飲食建議</div>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('ai-diet-plan-card').style.display='none'">收起</button>
+        </div>
+        <div class="ai-plan-text" id="ai-diet-plan-text"></div>
+      </div>
+
+      <!-- Food Library -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">常用食物庫</div>
+          <span style="font-size:11px;color:var(--text-dim)">點擊快速帶入</span>
+        </div>
+        <div class="food-library" id="food-library-btns">
+          <span style="font-size:12px;color:var(--text-muted)">新增食物後可儲存至食物庫</span>
+        </div>
+      </div>
+
+      <!-- Add Food -->
       <div class="card">
         <div class="card-header"><div class="card-title">新增食物</div></div>
         <div class="form-row">
-          <div class="form-group" style="flex:2; min-width:160px"><label>食物名稱</label><input type="text" id="food-name" placeholder="例：雞胸肉"></div>
-          <div class="form-group"><label>食用克數 (g)</label><input type="number" id="food-grams" placeholder="例：150"></div>
+          <div class="form-group" style="flex:2;min-width:160px">
+            <label>食物名稱</label>
+            <input type="text" id="food-name" placeholder="例：水煮花椰菜">
+          </div>
+          <div class="form-group">
+            <label>克數 (g)</label>
+            <input type="number" id="food-grams" placeholder="150">
+          </div>
+          <div class="form-group">
+            <label>餐別</label>
+            <select id="food-meal"><option>早餐</option><option>午餐</option><option>晚餐</option><option>點心</option></select>
+          </div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>熱量 (kcal/100g)</label><input type="number" id="food-cal" placeholder="165"></div>
-          <div class="form-group"><label>蛋白質 (g/100g)</label><input type="number" id="food-protein" placeholder="31"></div>
-          <div class="form-group"><label>碳水 (g/100g)</label><input type="number" id="food-carb" placeholder="0"></div>
-          <div class="form-group"><label>脂肪 (g/100g)</label><input type="number" id="food-fat" placeholder="3.6"></div>
+          <div class="form-group">
+            <label>熱量 (kcal/100g)</label>
+            <input type="number" id="food-cal" placeholder="自動查詢或手動輸入">
+          </div>
+          <div class="form-group">
+            <label>蛋白質 (g/100g)</label>
+            <input type="number" id="food-protein" placeholder="自動查詢">
+          </div>
+          <div class="form-group">
+            <label>碳水 (g/100g)</label>
+            <input type="number" id="food-carb" placeholder="自動查詢">
+          </div>
+          <div class="form-group">
+            <label>脂肪 (g/100g)</label>
+            <input type="number" id="food-fat" placeholder="自動查詢">
+          </div>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label>纖維 (g/100g)</label><input type="number" id="food-fiber" placeholder="0"></div>
-          <div class="form-group"><label>鈉 (mg/100g)</label><input type="number" id="food-sodium" placeholder="74"></div>
-          <div class="form-group"><label>餐別</label><select id="food-meal"><option>早餐</option><option>午餐</option><option>晚餐</option><option>點心</option></select></div>
+        <div class="query-status" id="query-status">🔍 正在查詢營養素成分...</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+          <button class="btn btn-secondary btn-sm" onclick="autoQueryNutrition()">🔍 自動查詢營養素</button>
+          <button class="btn btn-primary" onclick="addFoodRecord()">➕ 加入飲食記錄</button>
+          <button class="btn btn-secondary btn-sm" onclick="saveToFoodLibrary()">⭐ 儲存到食物庫</button>
         </div>
-        <button class="btn btn-primary" onclick="addFoodRecord()">➕ 加入今日飲食</button>
       </div>
+
       <div class="card">
         <div class="card-header"><div class="card-title">今日飲食清單</div></div>
         <div id="food-list-container"><div class="empty-state"><div class="empty-icon">🥗</div>尚無飲食記錄</div></div>
@@ -591,32 +680,56 @@
     <!-- TAB 4: AI -->
     <div id="panel-ai" class="panel">
       <div class="section-title">AI 營養師</div>
-      <div class="section-desc">上傳 InBody 數據，獲得專業飲食與訓練建議</div>
+      <div class="section-desc">上傳 InBody 數據，AI 分析後建議將自動同步到飲食記錄頁</div>
+
+      <!-- API Key -->
       <div class="card">
-        <div class="card-header"><div class="card-title">InBody 數據上傳</div></div>
+        <div class="card-header"><div class="card-title">Anthropic API Key</div></div>
+        <div class="key-input-row">
+          <input type="password" id="ai-api-key" placeholder="sk-ant-api03-..." oninput="saveApiKey(this.value)">
+          <span class="key-saved" id="key-saved-indicator" style="display:none">✓ 已儲存</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-dim)">前往 <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent2)">console.anthropic.com</a> → API Keys 申請，填入後才能使用 AI 功能</div>
+      </div>
+
+      <!-- InBody Multi Upload -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">InBody 報告上傳（可多張）</div>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('inbody-input').click()">➕ 新增照片</button>
+        </div>
+        <div class="inbody-images" id="inbody-images"></div>
         <div class="inbody-upload" onclick="document.getElementById('inbody-input').click()" id="upload-area">
           <div class="upload-icon">📊</div>
-          <div style="font-size:16px; font-weight:700; margin-bottom:6px;">點擊上傳 InBody 報告</div>
-          <div class="upload-text">支援 JPG / PNG 格式</div>
+          <div style="font-size:16px;font-weight:700;margin-bottom:6px;">點擊上傳 InBody 報告</div>
+          <div class="upload-text">可上傳多張，AI 將逐一分析每張報告</div>
         </div>
-        <input type="file" id="inbody-input" accept="image/*" style="display:none" onchange="handleInbodyUpload(this)">
-        <img id="inbody-preview" class="upload-preview">
+        <input type="file" id="inbody-input" accept="image/*" multiple style="display:none" onchange="handleInbodyUpload(this)">
       </div>
+
+      <!-- Info + Analysis -->
       <div class="card">
-        <div class="card-header"><div class="card-title">補充資訊</div></div>
+        <div class="card-header"><div class="card-title">個人資料</div></div>
         <div class="form-row">
           <div class="form-group"><label>目標</label><select id="ai-goal"><option value="減脂">減脂</option><option value="增肌">增肌</option><option value="增肌減脂">增肌減脂</option><option value="維持">維持現況</option></select></div>
-          <div class="form-group"><label>身高 (cm)</label><input type="number" id="ai-height" placeholder="例：175"></div>
-          <div class="form-group"><label>年齡</label><input type="number" id="ai-age" placeholder="例：25"></div>
+          <div class="form-group"><label>身高 (cm)</label><input type="number" id="ai-height" placeholder="175"></div>
+          <div class="form-group"><label>年齡</label><input type="number" id="ai-age" placeholder="25"></div>
         </div>
-        <div class="form-group" style="margin-bottom:12px"><label>額外說明</label><textarea id="ai-notes" placeholder="例：不吃海鮮、對乳製品過敏..."></textarea></div>
-        <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="btn btn-ai" onclick="runAIAnalysis()">🤖 分析並給予建議</button>
+        <div class="form-group" style="margin-bottom:16px"><label>額外說明（過敏、限制等）</label><textarea id="ai-notes" placeholder="例：不吃海鮮、乳糖不耐..."></textarea></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-ai" onclick="runAIAnalysis()">🤖 分析 InBody 並給出建議</button>
           <button class="btn btn-secondary" onclick="runWeeklyReport()">📊 本週追蹤報告</button>
         </div>
       </div>
-      <div class="ai-loading" id="ai-loading"><div class="spinner"></div><span>AI 營養師正在分析您的數據...</span></div>
+
+      <div class="ai-loading" id="ai-loading"><div class="spinner"></div><span>AI 正在分析 InBody 報告...</span></div>
+
+      <!-- AI Response with Apply button -->
       <div class="ai-response" id="ai-response"></div>
+      <div id="ai-apply-section" style="display:none;margin-top:12px">
+        <button class="btn btn-apply" onclick="applyAIDietPlan()">📋 套用飲食建議到飲食記錄頁</button>
+        <span style="font-size:11px;color:var(--text-dim);margin-left:8px">將在飲食頁顯示目標攝取量</span>
+      </div>
     </div>
 
   </div>
@@ -719,6 +832,8 @@ function showApp() {
   renderNutritionDay();
   renderWorkoutHistory();
   loadApiKey();
+  loadSavedDietPlan();
+  renderFoodLibrary();
 }
 
 function showAuthScreen() {
@@ -869,37 +984,10 @@ async function renderBodyHistory() {
         <button class="btn btn-danger btn-sm" onclick="deleteBody('${r.recorded_date}')">刪除</button>
       </div>
     </div>`).join('');
-  renderMiniBodyCharts(records);
 }
 
 function renderMiniBodyCharts(records) {
-  const sorted = [...records].sort((a,b) => a.recorded_date.localeCompare(b.recorded_date)).slice(-14);
-  const labels = sorted.map(r => r.recorded_date.slice(5));
-  const MINI_OPTS = {
-    responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { ticks: { color: '#64748b', font: { size: 9 }, maxRotation: 0 }, grid: { color: 'rgba(42,47,62,0.6)' } },
-      y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(42,47,62,0.6)' } }
-    }
-  };
-  destroyChart('mini-weight');
-  chartInstances['mini-weight'] = new Chart(document.getElementById('mini-weight'), {
-    type: 'line',
-    data: { labels, datasets: [
-      { label: '起床', data: sorted.map(r => r.morning_weight||null), borderColor: '#6ee7b7', tension: 0.3, pointRadius: 2, spanGaps: true, borderWidth: 1.5 },
-      { label: '睡前', data: sorted.map(r => r.evening_weight||null), borderColor: '#38bdf8', tension: 0.3, pointRadius: 2, spanGaps: true, borderWidth: 1.5 }
-    ]},
-    options: { ...MINI_OPTS, plugins: { legend: { display: true, labels: { color: '#94a3b8', font: { size: 9 }, boxWidth: 10 } } } }
-  });
-  destroyChart('mini-waist');
-  chartInstances['mini-waist'] = new Chart(document.getElementById('mini-waist'), {
-    type: 'line',
-    data: { labels, datasets: [
-      { label: '腰圍', data: sorted.map(r => r.waist_cm||null), borderColor: '#f472b6', tension: 0.3, pointRadius: 2, spanGaps: true, borderWidth: 1.5 }
-    ]},
-    options: MINI_OPTS
-  });
+  // Mini charts removed from body panel (use Charts tab for trends)
 }
 
 async function deleteBody(date) {
@@ -911,6 +999,41 @@ async function deleteBody(date) {
 // ════════════════════════════════════════════
 // NUTRITION TAB
 // ════════════════════════════════════════════
+async function autoQueryNutrition() {
+  const name = document.getElementById('food-name').value.trim();
+  if (!name) { alert('請先輸入食物名稱'); return; }
+  const apiKey = localStorage.getItem('ht_api_key') || '';
+  if (!apiKey) { alert('請先在 AI 營養師頁面填入 API Key'); return; }
+  const statusEl = document.getElementById('query-status');
+  statusEl.textContent = `🔍 正在查詢「${name}」的營養素成分...`;
+  statusEl.classList.add('visible');
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-allow-browser':'true' },
+      body: JSON.stringify({
+        model:'claude-haiku-4-5-20251001', max_tokens:300,
+        messages:[{ role:'user', content:`請查詢「${name}」每100g的營養素。綜合多個可靠來源（食品成分資料庫、USDA、衛福部等）給出平均值。只回傳JSON格式，不要其他文字：{"cal":數字,"protein":數字,"carb":數字,"fat":數字}` }]
+      })
+    });
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    const text = data.content?.map(c=>c.text||'').join('');
+    const match = text.match(/\{[^}]+\}/);
+    if (!match) throw new Error('無法解析回應');
+    const n = JSON.parse(match[0]);
+    document.getElementById('food-cal').value = n.cal || '';
+    document.getElementById('food-protein').value = n.protein || '';
+    document.getElementById('food-carb').value = n.carb || '';
+    document.getElementById('food-fat').value = n.fat || '';
+    statusEl.textContent = `✓ 已查詢到「${name}」的營養素，請確認後加入記錄`;
+    statusEl.style.color = 'var(--accent)';
+  } catch(e) {
+    statusEl.textContent = `✗ 查詢失敗：${e.message}，請手動輸入`;
+    statusEl.style.color = 'var(--danger)';
+  }
+}
+
 async function addFoodRecord() {
   const date = document.getElementById('nutrition-date').value || today();
   const name = document.getElementById('food-name').value.trim();
@@ -921,8 +1044,6 @@ async function addFoodRecord() {
   const protein100 = parseFloat(document.getElementById('food-protein').value) || 0;
   const carb100 = parseFloat(document.getElementById('food-carb').value) || 0;
   const fat100 = parseFloat(document.getElementById('food-fat').value) || 0;
-  const fiber100 = parseFloat(document.getElementById('food-fiber').value) || 0;
-  const sodium100 = parseFloat(document.getElementById('food-sodium').value) || 0;
   const meal = document.getElementById('food-meal').value;
   const ratio = grams / 100;
 
@@ -935,8 +1056,6 @@ async function addFoodRecord() {
     protein: Math.round(protein100 * ratio * 10) / 10,
     carb: Math.round(carb100 * ratio * 10) / 10,
     fat: Math.round(fat100 * ratio * 10) / 10,
-    fiber: Math.round(fiber100 * ratio * 10) / 10,
-    sodium: Math.round(sodium100 * ratio)
   };
 
   if (!SUPABASE_CONFIGURED) {
@@ -944,19 +1063,71 @@ async function addFoodRecord() {
     rows.push(entry);
     lsSave('nutrition_records', rows);
     setSyncStatus('synced', '✓ 已儲存（本機模式）');
-    ['food-name','food-grams','food-cal','food-protein','food-carb','food-fat','food-fiber','food-sodium'].forEach(id => document.getElementById(id).value = '');
+    clearFoodForm();
     renderNutritionDay();
     return;
   }
-
   const { error } = await db.from('nutrition_records').insert(entry);
   if (!error) {
-    setSyncStatus('synced', '✓ 已同步至所有裝置');
-    ['food-name','food-grams','food-cal','food-protein','food-carb','food-fat','food-fiber','food-sodium'].forEach(id => document.getElementById(id).value = '');
+    setSyncStatus('synced', '✓ 已同步');
+    clearFoodForm();
     renderNutritionDay();
-  } else {
-    setSyncStatus('error', '✗ 儲存失敗');
+  } else { setSyncStatus('error', '✗ 儲存失敗'); }
+}
+
+function clearFoodForm() {
+  ['food-name','food-grams','food-cal','food-protein','food-carb','food-fat'].forEach(id => document.getElementById(id).value = '');
+  const s = document.getElementById('query-status');
+  s.classList.remove('visible');
+  s.style.color = 'var(--accent2)';
+}
+
+// ── Food Library ──
+function renderFoodLibrary() {
+  const lib = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
+  const el = document.getElementById('food-library-btns');
+  if (!lib.length) {
+    el.innerHTML = '<span style="font-size:12px;color:var(--text-muted)">尚無常用食物，新增食物後點「儲存到食物庫」</span>';
+    return;
   }
+  el.innerHTML = lib.map((f,i) => `
+    <button class="food-lib-btn" onclick="loadFromLibrary(${i})">
+      ${f.name}
+      <span class="del-lib" onclick="event.stopPropagation();deleteFromLibrary(${i})">✕</span>
+    </button>`).join('');
+}
+
+function saveToFoodLibrary() {
+  const name = document.getElementById('food-name').value.trim();
+  const cal = document.getElementById('food-cal').value;
+  const protein = document.getElementById('food-protein').value;
+  const carb = document.getElementById('food-carb').value;
+  const fat = document.getElementById('food-fat').value;
+  if (!name) { alert('請先輸入食物名稱'); return; }
+  const lib = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
+  if (lib.find(f => f.name === name)) { alert('食物庫已有此項目'); return; }
+  lib.push({ name, cal100: parseFloat(cal)||0, protein100: parseFloat(protein)||0, carb100: parseFloat(carb)||0, fat100: parseFloat(fat)||0 });
+  localStorage.setItem('ht_food_library', JSON.stringify(lib));
+  renderFoodLibrary();
+  setSyncStatus('synced', `✓「${name}」已儲存到食物庫`);
+}
+
+function loadFromLibrary(i) {
+  const lib = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
+  const f = lib[i];
+  if (!f) return;
+  document.getElementById('food-name').value = f.name;
+  document.getElementById('food-cal').value = f.cal100 || '';
+  document.getElementById('food-protein').value = f.protein100 || '';
+  document.getElementById('food-carb').value = f.carb100 || '';
+  document.getElementById('food-fat').value = f.fat100 || '';
+}
+
+function deleteFromLibrary(i) {
+  const lib = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
+  lib.splice(i, 1);
+  localStorage.setItem('ht_food_library', JSON.stringify(lib));
+  renderFoodLibrary();
 }
 
 async function renderNutritionDay() {
@@ -975,41 +1146,72 @@ async function renderNutritionDay() {
     carb: acc.carb + (r.carb||0), fat: acc.fat + (r.fat||0)
   }), { cal:0, protein:0, carb:0, fat:0 });
 
-  document.getElementById('total-cal').textContent = Math.round(totals.cal);
-  document.getElementById('total-protein').textContent = Math.round(totals.protein) + 'g';
-  document.getElementById('total-carb').textContent = Math.round(totals.carb) + 'g';
-  document.getElementById('total-fat').textContent = Math.round(totals.fat) + 'g';
+  // Update new nutrient targets UI
+  updateNutrientBoxes(totals);
 
   const container = document.getElementById('food-list-container');
-  if (!rows.length) { container.innerHTML = '<div class="empty-state"><div class="empty-icon">🥗</div>今日尚無飲食記錄</div>'; return; }
+  if (!rows.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">🥗</div>今日尚無飲食記錄</div>';
+    renderFoodLibrary();
+    return;
+  }
 
   const meals = ['早餐','午餐','晚餐','點心'];
-  let html = '';
+  let h = '';
   meals.forEach(meal => {
     const items = rows.filter(r => r.meal === meal);
     if (!items.length) return;
-    html += `<div style="margin-bottom:10px"><div style="font-size:12px;color:var(--text-dim);font-weight:600;margin-bottom:6px">${meal}</div>`;
+    h += `<div style="margin-bottom:12px"><div style="font-size:12px;color:var(--text-dim);font-weight:700;margin-bottom:6px;letter-spacing:0.5px">${meal}</div>`;
     items.forEach(r => {
-      html += `<div class="food-item">
+      h += `<div class="food-item">
         <div>
           <div class="food-name">${r.food_name} <span style="color:var(--text-dim);font-size:12px;font-weight:400">${r.grams}g</span></div>
           <div class="food-nutrients">
             <span class="nutrient-badge cal">🔥 ${r.cal} kcal</span>
-            <span class="nutrient-badge protein">💪 蛋白 ${r.protein}g</span>
-            <span class="nutrient-badge carb">⚡ 碳水 ${r.carb}g</span>
-            <span class="nutrient-badge fat">🫙 脂肪 ${r.fat}g</span>
+            <span class="nutrient-badge protein">蛋白 ${r.protein}g</span>
+            <span class="nutrient-badge carb">碳水 ${r.carb}g</span>
+            <span class="nutrient-badge fat">脂肪 ${r.fat}g</span>
           </div>
         </div>
         <div class="action-btns">
-            <button class="btn btn-edit btn-sm" onclick="editFoodRecord(${r.id}, '${r.food_name}', ${r.grams}, '${r.meal}', ${r.cal}, ${r.protein}, ${r.carb}, ${r.fat}, ${r.fiber||0}, ${r.sodium||0})">編輯</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteFoodRecord(${r.id})">刪除</button>
-          </div>
+          <button class="btn btn-edit btn-sm" onclick="editFoodRecord(${r.id},'${r.food_name.replace(/'/g,"\'")}',${r.grams},'${r.meal}',${r.cal},${r.protein},${r.carb},${r.fat})">編輯</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteFoodRecord(${r.id})">刪除</button>
+        </div>
       </div>`;
     });
-    html += '</div>';
+    h += '</div>';
   });
-  container.innerHTML = html;
-  renderMiniCalChart();
+  container.innerHTML = h;
+  renderFoodLibrary();
+}
+
+function updateNutrientBoxes(totals) {
+  const targets = JSON.parse(localStorage.getItem('ht_nutrient_targets') || '{}');
+  const fields = [
+    { cur:'nt-cal-cur', tgt:'nt-cal-tgt', rem:'nt-cal-rem', bar:'nt-cal-bar', key:'cal', unit:'kcal', color:'#6ee7b7' },
+    { cur:'nt-p-cur',   tgt:'nt-p-tgt',   rem:'nt-p-rem',   bar:'nt-p-bar',   key:'protein', unit:'g', color:'#fb923c' },
+    { cur:'nt-c-cur',   tgt:'nt-c-tgt',   rem:'nt-c-rem',   bar:'nt-c-bar',   key:'carb', unit:'g', color:'#38bdf8' },
+    { cur:'nt-f-cur',   tgt:'nt-f-tgt',   rem:'nt-f-rem',   bar:'nt-f-bar',   key:'fat', unit:'g', color:'#f472b6' },
+  ];
+  fields.forEach(f => {
+    const cur = Math.round(totals[f.key] || 0);
+    const tgt = targets[f.key];
+    document.getElementById(f.cur).textContent = cur;
+    if (tgt) {
+      const rem = tgt - cur;
+      document.getElementById(f.tgt).textContent = tgt + f.unit;
+      const remEl = document.getElementById(f.rem);
+      remEl.textContent = rem >= 0 ? `還差 ${rem}${f.unit}` : `超過 ${-rem}${f.unit}`;
+      remEl.className = 'nutrient-box-remain ' + (rem >= 0 ? 'remain-ok' : 'remain-over');
+      const pct = Math.min(100, Math.round(cur/tgt*100));
+      document.getElementById(f.bar).style.width = pct + '%';
+      document.getElementById(f.bar).style.background = f.color;
+    } else {
+      document.getElementById(f.tgt).textContent = '未設定';
+      document.getElementById(f.rem).textContent = '';
+      document.getElementById(f.bar).style.width = '0%';
+    }
+  });
 }
 
 async function deleteFoodRecord(id) {
@@ -1266,8 +1468,10 @@ async function runAIAnalysis() {
     return;
   }
 
+  // Show all uploaded InBody images in prompt
   const userContent = [];
-  inbodyImages.forEach(img => {
+  inbodyImages.forEach((img, idx) => {
+    userContent.push({ type:'text', text:`[InBody 報告 ${idx+1}/${inbodyImages.length}]` });
     userContent.push({ type:'image', source:{ type:'base64', media_type:img.mediaType, data:img.base64 } });
   });
   userContent.push({ type:'text', text:`你是一位專業的營養師與健身教練，請根據以下資訊提供詳細的分析與建議：\n\n【基本資料】\n年齡：${age||'未填寫'} 歲\n身高：${height||'未填寫'} cm\n目標：${goal}\n特殊需求：${notes||'無'}\n\n【近期體態記錄】\n${bodyText}\n\n【近14天飲食營養素攝取】\n${nutritionText}\n\n【近期訓練記錄】\n${workoutText}\n\n${inbodyImages.length>0?'【已上傳 '+inbodyImages.length+' 張 InBody 報告，請一併分析圖片中的數據】':''}\n\n請提供：\n1. 🔍 當前狀態分析\n2. 🎯 每日建議熱量與三大營養素分配\n3. 🍱 3天的飲食範例\n4. 💪 訓練建議\n5. ⚠️ 需要改善的地方\n6. 📈 預計4週進展\n\n請用繁體中文回答，條理清晰，實用具體。` });
@@ -1283,6 +1487,9 @@ async function runAIAnalysis() {
     const text = result.content?.map(c => c.text||'').join('') || '無法取得回應';
     document.getElementById('ai-response').textContent = text;
     document.getElementById('ai-response').classList.add('visible');
+    // Store response for apply
+    window._lastAIResponse = text;
+    document.getElementById('ai-apply-section').style.display = 'block';
   } catch(e) {
     document.getElementById('ai-response').textContent = '❌ 錯誤：' + e.message + '\n\n請確認 API Key 是否正確。';
     document.getElementById('ai-response').classList.add('visible');
@@ -1499,6 +1706,66 @@ async function editWorkoutRecord(id) {
     if (!error) { setSyncStatus('synced', '✓ 已更新'); closeModal(); renderWorkoutHistory(); }
     else { setSyncStatus('error', '✗ 更新失敗'); }
   });
+}
+
+
+// ════════════════════════════════════════════
+// APPLY AI DIET PLAN TO NUTRITION PAGE
+// ════════════════════════════════════════════
+async function applyAIDietPlan() {
+  const text = window._lastAIResponse || '';
+  const apiKey = localStorage.getItem('ht_api_key') || '';
+  if (!apiKey) { alert('需要 API Key'); return; }
+
+  // Ask Claude to extract nutrition targets from the analysis
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-allow-browser':'true' },
+      body: JSON.stringify({
+        model:'claude-haiku-4-5-20251001', max_tokens:200,
+        messages:[{ role:'user', content:`從以下 AI 分析中提取建議的每日營養素目標數字。只回傳 JSON，不要其他文字：{"cal":數字,"protein":數字,"carb":數字,"fat":數字}
+
+分析內容：
+${text.slice(0,2000)}` }]
+      })
+    });
+    const data = await resp.json();
+    const t = data.content?.map(c=>c.text||'').join('');
+    const match = t.match(/\{[^}]+\}/);
+    if (!match) throw new Error('無法解析');
+    const targets = JSON.parse(match[0]);
+    localStorage.setItem('ht_nutrient_targets', JSON.stringify(targets));
+
+    // Also store diet plan text to show in nutrition page
+    localStorage.setItem('ht_diet_plan_text', text.slice(0, 1500));
+
+    alert('✅ 飲食建議已套用！請切換到飲食記錄頁查看目標攝取量。');
+
+    // Switch to nutrition tab
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t2 => t2.classList.remove('active'));
+    document.getElementById('panel-nutrition').classList.add('active');
+    document.querySelectorAll('.tab')[1].classList.add('active');
+    renderNutritionDay();
+
+    // Show AI plan card in nutrition page
+    const planCard = document.getElementById('ai-diet-plan-card');
+    const planText = document.getElementById('ai-diet-plan-text');
+    planText.textContent = text.slice(0, 1500);
+    planCard.style.display = 'block';
+  } catch(e) {
+    alert('套用失敗：' + e.message);
+  }
+}
+
+// Load saved diet plan on init
+function loadSavedDietPlan() {
+  const plan = localStorage.getItem('ht_diet_plan_text');
+  if (plan) {
+    document.getElementById('ai-diet-plan-text').textContent = plan;
+    document.getElementById('ai-diet-plan-card').style.display = 'block';
+  }
 }
 
 // ════════════════════════════════════════════
