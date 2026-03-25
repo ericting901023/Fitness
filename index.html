@@ -386,6 +386,44 @@
   .action-btns { display: flex; gap: 6px; }
 
 
+
+  /* ── AI CHAT UI ── */
+  .chat-container { display: flex; flex-direction: column; height: 520px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .chat-msg { display: flex; gap: 10px; max-width: 92%; }
+  .chat-msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .chat-msg.ai { align-self: flex-start; }
+  .chat-bubble { padding: 10px 14px; border-radius: 14px; font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
+  .chat-msg.user .chat-bubble { background: var(--accent2); color: #0d1117; border-radius: 14px 14px 4px 14px; }
+  .chat-msg.ai .chat-bubble { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 14px 14px 14px 4px; }
+  .chat-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; margin-top: 2px; }
+  .chat-avatar.ai { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+  .chat-avatar.user { background: var(--accent2); color: #0d1117; font-weight: 700; font-size: 11px; }
+  .chat-input-row { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--border); background: var(--surface); }
+  .chat-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 10px 16px; color: var(--text); font-family: 'Noto Sans TC', sans-serif; font-size: 13px; outline: none; resize: none; max-height: 100px; line-height: 1.5; }
+  .chat-input:focus { border-color: var(--accent2); }
+  .chat-send { width: 38px; height: 38px; border-radius: 50%; background: var(--accent2); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; align-self: flex-end; }
+  .chat-send:hover { background: #7dd3fc; }
+  .chat-send svg { width: 16px; height: 16px; fill: #0d1117; }
+  .chat-typing { display: flex; gap: 4px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px 14px 14px 4px; width: fit-content; }
+  .chat-typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--text-dim); animation: bounce 1.2s infinite; }
+  .chat-typing span:nth-child(2) { animation-delay: 0.2s; }
+  .chat-typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+  /* ── MEAL PLAN DISPLAY ── */
+  .meal-plan-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; }
+  .meal-plan-time { font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 6px; }
+  .meal-plan-name { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .meal-plan-foods { font-size: 13px; color: var(--text-dim); margin-bottom: 8px; line-height: 1.6; }
+  .meal-plan-macros { display: flex; gap: 8px; flex-wrap: wrap; }
+  .macro-tag { padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .macro-cal { background: rgba(110,231,183,0.15); color: var(--accent); border: 1px solid rgba(110,231,183,0.3); }
+  .macro-p { background: rgba(251,146,60,0.15); color: #fb923c; border: 1px solid rgba(251,146,60,0.3); }
+  .macro-c { background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); }
+  .macro-f { background: rgba(244,114,182,0.15); color: #f472b6; border: 1px solid rgba(244,114,182,0.3); }
+  .plan-total { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+
   /* ── NUTRIENT TARGETS ── */
   .nutrient-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
   .nutrient-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; }
@@ -680,56 +718,83 @@
     <!-- TAB 4: AI -->
     <div id="panel-ai" class="panel">
       <div class="section-title">AI 營養師</div>
-      <div class="section-desc">上傳 InBody 數據，AI 分析後建議將自動同步到飲食記錄頁</div>
+      <div class="section-desc">結合你的體重、訓練、飲食趨勢，給出個人化每日飲食計畫</div>
 
-      <!-- API Key -->
-      <div class="card">
-        <div class="card-header"><div class="card-title">Anthropic API Key</div></div>
-        <div class="key-input-row">
-          <input type="password" id="ai-api-key" placeholder="sk-ant-api03-..." oninput="saveApiKey(this.value)">
-          <span class="key-saved" id="key-saved-indicator" style="display:none">✓ 已儲存</span>
+      <!-- API Key (collapsible) -->
+      <div class="card" id="api-key-card">
+        <div class="card-header" style="cursor:pointer;margin-bottom:0" onclick="toggleApiKeyCard()">
+          <div class="card-title">API Key 設定</div>
+          <span id="api-key-status" style="font-size:12px;color:var(--text-dim)">未設定</span>
         </div>
-        <div style="font-size:11px;color:var(--text-dim)">前往 <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent2)">console.anthropic.com</a> → API Keys 申請，填入後才能使用 AI 功能</div>
+        <div id="api-key-body" style="margin-top:14px;display:none">
+          <div class="key-input-row">
+            <input type="password" id="ai-api-key" placeholder="sk-ant-api03-..." oninput="saveApiKey(this.value)">
+            <span class="key-saved" id="key-saved-indicator" style="display:none">✓ 已儲存</span>
+          </div>
+          <div style="font-size:11px;color:var(--text-dim)">前往 <a href="https://console.anthropic.com" target="_blank" style="color:var(--accent2)">console.anthropic.com</a> → API Keys 取得</div>
+        </div>
       </div>
 
-      <!-- InBody Multi Upload -->
+      <!-- InBody Upload (optional) -->
       <div class="card">
         <div class="card-header">
-          <div class="card-title">InBody 報告上傳（可多張）</div>
-          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('inbody-input').click()">➕ 新增照片</button>
+          <div class="card-title">InBody 報告（選填，可多張）</div>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('inbody-input').click()">➕ 上傳</button>
         </div>
         <div class="inbody-images" id="inbody-images"></div>
-        <div class="inbody-upload" onclick="document.getElementById('inbody-input').click()" id="upload-area">
-          <div class="upload-icon">📊</div>
-          <div style="font-size:16px;font-weight:700;margin-bottom:6px;">點擊上傳 InBody 報告</div>
-          <div class="upload-text">可上傳多張，AI 將逐一分析每張報告</div>
-        </div>
+        <div id="upload-area" style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px 0;cursor:pointer" onclick="document.getElementById('inbody-input').click()">點擊上傳 InBody 照片（不上傳也可以直接對話分析）</div>
         <input type="file" id="inbody-input" accept="image/*" multiple style="display:none" onchange="handleInbodyUpload(this)">
       </div>
 
-      <!-- Info + Analysis -->
+      <!-- Profile (compact) -->
       <div class="card">
-        <div class="card-header"><div class="card-title">個人資料</div></div>
+        <div class="card-header"><div class="card-title">基本資料</div></div>
         <div class="form-row">
-          <div class="form-group"><label>目標</label><select id="ai-goal"><option value="減脂">減脂</option><option value="增肌">增肌</option><option value="增肌減脂">增肌減脂</option><option value="維持">維持現況</option></select></div>
-          <div class="form-group"><label>身高 (cm)</label><input type="number" id="ai-height" placeholder="175"></div>
-          <div class="form-group"><label>年齡</label><input type="number" id="ai-age" placeholder="25"></div>
-        </div>
-        <div class="form-group" style="margin-bottom:16px"><label>額外說明（過敏、限制等）</label><textarea id="ai-notes" placeholder="例：不吃海鮮、乳糖不耐..."></textarea></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button class="btn btn-ai" onclick="runAIAnalysis()">🤖 分析 InBody 並給出建議</button>
-          <button class="btn btn-secondary" onclick="runWeeklyReport()">📊 本週追蹤報告</button>
+          <div class="form-group"><label>目標</label><select id="ai-goal"><option value="增肌減脂">增肌減脂</option><option value="減脂">減脂</option><option value="增肌">增肌</option><option value="維持">維持現況</option></select></div>
+          <div class="form-group"><label>身高 (cm)</label><input type="number" id="ai-height" placeholder="171"></div>
+          <div class="form-group"><label>年齡</label><input type="number" id="ai-age" placeholder="24"></div>
         </div>
       </div>
 
-      <div class="ai-loading" id="ai-loading"><div class="spinner"></div><span>AI 正在分析 InBody 報告...</span></div>
+      <!-- CHAT BOX -->
+      <div class="chat-container">
+        <div class="chat-messages" id="chat-messages">
+          <div class="chat-msg ai">
+            <div class="chat-avatar ai">🤖</div>
+            <div class="chat-bubble">嗨！我是你的 AI 營養師。我會自動讀取你的體重趨勢、訓練記錄和飲食數據來給出建議。
 
-      <!-- AI Response with Apply button -->
-      <div class="ai-response" id="ai-response"></div>
-      <div id="ai-apply-section" style="display:none;margin-top:12px">
-        <button class="btn btn-apply" onclick="applyAIDietPlan()">📋 套用飲食建議到飲食記錄頁</button>
-        <span style="font-size:11px;color:var(--text-dim);margin-left:8px">將在飲食頁顯示目標攝取量</span>
+你可以直接問我，例如：
+• 「幫我分析這週的狀況，給出飲食計畫」
+• 「根據我的訓練量，蛋白質夠嗎？」
+• 「給我訓練日和休息日的飲食安排」
+
+或者上傳 InBody 照片讓分析更精確 📊</div>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <textarea class="chat-input" id="chat-input" placeholder="輸入你的需求... (Enter 送出，Shift+Enter 換行)" rows="1" onkeydown="handleChatKey(event)"></textarea>
+          <button class="chat-send" onclick="sendChatMessage()" title="送出">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
       </div>
+
+      <!-- Quick prompts -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+        <button class="chart-tab" onclick="quickPrompt('根據我最近的體重趨勢和訓練記錄，幫我分析本週狀況並給出訓練日和休息日的詳細飲食計畫，包含每餐吃什麼、幾公克、幾點吃')">📊 本週飲食計畫</button>
+        <button class="chart-tab" onclick="quickPrompt('分析我最近的體重變化趨勢，蛋白質攝取夠嗎？訓練強度跟飲食配合得好嗎？')">⚖️ 趨勢分析</button>
+        <button class="chart-tab" onclick="quickPrompt('幫我設定本週的每日熱量、蛋白質、碳水、脂肪目標數字，並說明理由')">🎯 設定營養目標</button>
+        <button class="chart-tab" onclick="quickPrompt('根據我的數據，給我一個下週的飲食調整建議')">📅 下週調整</button>
+      </div>
+
+      <!-- Apply section -->
+      <div id="ai-apply-section" style="display:none;margin-bottom:16px">
+        <button class="btn btn-apply" onclick="applyAIDietPlan()">📋 套用最新飲食目標到飲食記錄頁</button>
+        <span style="font-size:11px;color:var(--text-dim);margin-left:8px">點擊後飲食頁會顯示目標攝取量與進度條</span>
+      </div>
+
+      <!-- AI loading (now inline in chat) -->
+      <div class="ai-loading" id="ai-loading" style="display:none"><div class="spinner"></div><span>AI 分析中...</span></div>
     </div>
 
   </div>
@@ -1386,9 +1451,11 @@ async function deleteWorkout(id) {
 }
 
 // ════════════════════════════════════════════
-// AI TAB
+// AI CHAT SYSTEM
 // ════════════════════════════════════════════
-let inbodyImages = []; // array of {base64, mediaType}
+let inbodyImages = [];
+let chatHistory = []; // stores {role, content} for multi-turn
+
 function handleInbodyUpload(input) {
   const files = Array.from(input.files);
   if (!files.length) return;
@@ -1396,15 +1463,14 @@ function handleInbodyUpload(input) {
     const reader = new FileReader();
     reader.onload = (e) => {
       const src = e.target.result;
-      const mediaType = src.split(';')[0].split(':')[1];
-      const base64 = src.split(',')[1];
-      inbodyImages.push({ src, base64, mediaType });
+      inbodyImages.push({ src, base64: src.split(',')[1], mediaType: src.split(';')[0].split(':')[1] });
       renderInbodyThumbs();
     };
     reader.readAsDataURL(file);
   });
   input.value = '';
 }
+
 function renderInbodyThumbs() {
   const container = document.getElementById('inbody-images');
   const uploadArea = document.getElementById('upload-area');
@@ -1415,299 +1481,203 @@ function renderInbodyThumbs() {
       <button class="remove-img" onclick="removeInbodyImg(${i})">✕</button>
     </div>`).join('');
 }
+
 function removeInbodyImg(i) {
   inbodyImages.splice(i, 1);
   renderInbodyThumbs();
-  if (inbodyImages.length === 0) document.getElementById('upload-area').style.display = 'block';
+  if (!inbodyImages.length) document.getElementById('upload-area').style.display = 'block';
 }
 
-async function getRecentData() {
-  const bodyRecords = await dbSelect('body_records', 'recorded_date');
-  const workoutRecords = await dbSelect('workout_records', 'recorded_date');
-  const nutritionSummary = [];
-  for (let i = 0; i < 14; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
+function toggleApiKeyCard() {
+  const body = document.getElementById('api-key-body');
+  body.style.display = body.style.display === 'none' ? 'block' : 'none';
+}
+
+function handleChatKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+}
+
+function quickPrompt(text) {
+  document.getElementById('chat-input').value = text;
+  sendChatMessage();
+}
+
+function appendChatMsg(role, text) {
+  const messages = document.getElementById('chat-messages');
+  const isUser = role === 'user';
+  const initials = (currentUser?.user_metadata?.name || 'U')[0].toUpperCase();
+  const div = document.createElement('div');
+  div.className = `chat-msg ${role}`;
+  div.innerHTML = `
+    <div class="chat-avatar ${role}">${isUser ? initials : '🤖'}</div>
+    <div class="chat-bubble">${text.replace(/
+/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<b>$1</b>').replace(/•/g,'•')}</div>`;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function showTyping() {
+  const messages = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'chat-msg ai';
+  div.id = 'typing-indicator';
+  div.innerHTML = `<div class="chat-avatar ai">🤖</div><div class="chat-typing"><span></span><span></span><span></span></div>`;
+  messages.appendChild(div);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+async function buildDataContext() {
+  // Pull all user data to give AI full context
+  const bodyRecs = await dbSelect('body_records', 'recorded_date', true);
+  const workoutRecs = await dbSelect('workout_records', 'recorded_date', false);
+  const recentBody = bodyRecs.slice(-30);
+  const recentWorkout = workoutRecs.slice(0, 14);
+
+  // Get last 14 days nutrition
+  const nutSummary = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate() - i);
     const ds = d.toISOString().split('T')[0];
     let rows = [];
     if (!SUPABASE_CONFIGURED) {
       rows = lsLoad('nutrition_records').filter(r => r.recorded_date === ds);
     } else {
-      const { data } = await db.from('nutrition_records').select('*').eq('user_id', currentUser.id).eq('recorded_date', ds);
+      const { data } = await db.from('nutrition_records').select('cal,protein,carb,fat').eq('user_id', currentUser.id).eq('recorded_date', ds);
       rows = data || [];
     }
-    const totals = rows.reduce((acc, r) => ({ cal: acc.cal+(r.cal||0), protein: acc.protein+(r.protein||0), carb: acc.carb+(r.carb||0), fat: acc.fat+(r.fat||0) }), {cal:0,protein:0,carb:0,fat:0});
-    nutritionSummary.push({ date: ds, totals });
+    const t = rows.reduce((a,r) => ({ cal:a.cal+(r.cal||0), protein:a.protein+(r.protein||0), carb:a.carb+(r.carb||0), fat:a.fat+(r.fat||0) }), {cal:0,protein:0,carb:0,fat:0});
+    if (t.cal > 0) nutSummary.push(`${ds}: ${Math.round(t.cal)}kcal 蛋白${Math.round(t.protein)}g 碳水${Math.round(t.carb)}g 脂肪${Math.round(t.fat)}g`);
   }
-  return { bodyRecords: bodyRecords.slice(0,7), workoutRecords: workoutRecords.slice(0,7), nutritionSummary };
+
+  const weightTrend = recentBody.map(r => `${r.recorded_date} 起床:${r.morning_weight||'-'}kg 睡前:${r.evening_weight||'-'}kg 腰圍:${r.waist_cm||'-'}cm`).join('
+') || '尚無記錄';
+  const workoutTrend = recentWorkout.map(r => `${r.recorded_date} [${r.day_label}]: ${(r.exercises||[]).map(e=>`${e.name}(${compactSets(e.sets)})`).join(', ')}`).join('
+') || '尚無記錄';
+
+  const goal = document.getElementById('ai-goal')?.value || '增肌減脂';
+  const height = document.getElementById('ai-height')?.value || '';
+  const age = document.getElementById('ai-age')?.value || '';
+  const latestWeight = recentBody.length ? recentBody[recentBody.length-1].morning_weight : '未知';
+  const latestWaist = recentBody.filter(r=>r.waist_cm).pop()?.waist_cm || '未知';
+
+  return `【使用者基本資料】
+目標：${goal} | 身高：${height||'未填'}cm | 年齡：${age||'未填'}歲
+最新體重：${latestWeight}kg | 最新腰圍：${latestWaist}cm
+
+【近30天體重/腰圍趨勢】
+${weightTrend}
+
+【近14天飲食記錄】
+${nutSummary.join('
+') || '尚無記錄'}
+
+【近14筆訓練記錄】
+訓練分化：胸+三頭 / 背+二頭 / 腿+腹肌 / 肩+小臂 / 休息 / 上半身 / 有氧
+${workoutTrend}
+
+${inbodyImages.length > 0 ? `【InBody 報告】已上傳 ${inbodyImages.length} 張，請一併分析` : '【InBody 報告】未上傳（請根據趨勢數據分析）'}`;
 }
 
-async function runAIAnalysis() {
-  const goal = document.getElementById('ai-goal').value;
-  const height = document.getElementById('ai-height').value;
-  const age = document.getElementById('ai-age').value;
-  const notes = document.getElementById('ai-notes').value;
-  const data = await getRecentData();
-
-  document.getElementById('ai-loading').classList.add('visible');
-  document.getElementById('ai-response').classList.remove('visible');
-
-  const bodyText = data.bodyRecords.length > 0
-    ? data.bodyRecords.map(r => `日期:${r.recorded_date} 起床:${r.morning_weight||'-'}kg 睡前:${r.evening_weight||'-'}kg 腰圍:${r.waist_cm||'-'}cm`).join('\n')
-    : '尚無體態記錄';
-  const nutritionText = data.nutritionSummary.map(d => `${d.date}: 熱量${d.totals.cal}kcal 蛋白${Math.round(d.totals.protein)}g 碳水${Math.round(d.totals.carb)}g 脂肪${Math.round(d.totals.fat)}g`).join('\n');
-  const workoutText = data.workoutRecords.length > 0
-    ? data.workoutRecords.map(r => `${r.recorded_date} [${r.day_label}]: ${(r.exercises||[]).map(e=>e.name).join(', ')}`).join('\n')
-    : '尚無訓練記錄';
+async function sendChatMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
 
   const apiKey = localStorage.getItem('ht_api_key') || '';
   if (!apiKey) {
-    document.getElementById('ai-response').textContent = '❌ 請先填入你的 Anthropic API Key（在上方欄位輸入）';
-    document.getElementById('ai-response').classList.add('visible');
-    document.getElementById('ai-loading').classList.remove('visible');
+    appendChatMsg('ai', '❌ 請先在上方「API Key 設定」填入你的 Anthropic API Key');
     return;
   }
 
-  // Show all uploaded InBody images in prompt
-  const userContent = [];
-  inbodyImages.forEach((img, idx) => {
-    userContent.push({ type:'text', text:`[InBody 報告 ${idx+1}/${inbodyImages.length}]` });
-    userContent.push({ type:'image', source:{ type:'base64', media_type:img.mediaType, data:img.base64 } });
-  });
-  userContent.push({ type:'text', text:`你是一位專業的營養師與健身教練，請根據以下資訊提供詳細的分析與建議：\n\n【基本資料】\n年齡：${age||'未填寫'} 歲\n身高：${height||'未填寫'} cm\n目標：${goal}\n特殊需求：${notes||'無'}\n\n【近期體態記錄】\n${bodyText}\n\n【近14天飲食營養素攝取】\n${nutritionText}\n\n【近期訓練記錄】\n${workoutText}\n\n${inbodyImages.length>0?'【已上傳 '+inbodyImages.length+' 張 InBody 報告，請一併分析圖片中的數據】':''}\n\n請提供：\n1. 🔍 當前狀態分析\n2. 🎯 每日建議熱量與三大營養素分配\n3. 🍱 3天的飲食範例\n4. 💪 訓練建議\n5. ⚠️ 需要改善的地方\n6. 📈 預計4週進展\n\n請用繁體中文回答，條理清晰，實用具體。` });
+  input.value = '';
+  input.style.height = 'auto';
+  appendChatMsg('user', text);
+  showTyping();
+
+  // Build messages array
+  const dataCtx = await buildDataContext();
+
+  // System prompt
+  const systemPrompt = `你是一位專業的運動營養師，擁有豐富的健身飲食規劃經驗。你能讀取使用者的健身追蹤數據並給出精準建議。
+
+${dataCtx}
+
+請用繁體中文回答。給出具體的飲食建議時，請包含：
+- 每餐的具體食物和克數
+- 每餐的營養素（熱量、蛋白質、碳水、脂肪）
+- 建議進食時間
+- 訓練日和休息日的差異（如果適用）
+
+格式要清楚易讀，像是你截圖中的風格。如果使用者問到每日目標數字，請給出具體的 kcal、蛋白質g、碳水g、脂肪g 數字，方便套用到飲食記錄頁。`;
+
+  // Add to history
+  chatHistory.push({ role: 'user', content: text });
+
+  // Build content with images if first message and images uploaded
+  let userContent;
+  if (inbodyImages.length > 0 && chatHistory.length === 1) {
+    userContent = [];
+    inbodyImages.forEach((img, i) => {
+      userContent.push({ type:'text', text:`[InBody 報告 ${i+1}]` });
+      userContent.push({ type:'image', source:{ type:'base64', media_type:img.mediaType, data:img.base64 } });
+    });
+    userContent.push({ type:'text', text });
+  } else {
+    userContent = text;
+  }
+
+  // Build messages (keep last 10 turns for context)
+  const msgs = chatHistory.slice(-10).map((m, i) => ({
+    role: m.role,
+    content: i === chatHistory.length - 1 && userContent !== text ? userContent : m.content
+  }));
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-allow-browser': 'true' },
-      body: JSON.stringify({ model:'claude-sonnet-4-5-20251001', max_tokens:2000, system:'你是一位擁有豐富臨床經驗的運動營養師，專精於體態管理、重量訓練飲食規劃。請提供專業、實用、具體的建議。', messages:[{ role:'user', content:userContent }] })
+      headers: { 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-allow-browser':'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2000,
+        system: systemPrompt,
+        messages: msgs
+      })
     });
-    const result = await response.json();
-    if (result.error) throw new Error(result.error.message);
-    const text = result.content?.map(c => c.text||'').join('') || '無法取得回應';
-    document.getElementById('ai-response').textContent = text;
-    document.getElementById('ai-response').classList.add('visible');
-    // Store response for apply
-    window._lastAIResponse = text;
+    const data = await resp.json();
+    if (data.error) throw new Error(data.error.message);
+    const reply = data.content?.map(c=>c.text||'').join('') || '無回應';
+    removeTyping();
+    appendChatMsg('ai', reply);
+    chatHistory.push({ role: 'assistant', content: reply });
+    window._lastAIResponse = reply;
     document.getElementById('ai-apply-section').style.display = 'block';
   } catch(e) {
-    document.getElementById('ai-response').textContent = '❌ 錯誤：' + e.message + '\n\n請確認 API Key 是否正確。';
-    document.getElementById('ai-response').classList.add('visible');
-  } finally {
-    document.getElementById('ai-loading').classList.remove('visible');
+    removeTyping();
+    appendChatMsg('ai', `❌ 錯誤：${e.message}
+
+請確認 API Key 是否正確，或稍後再試。`);
+    chatHistory.pop(); // remove failed user message from history
   }
 }
 
+// Keep old runAIAnalysis/runWeeklyReport as quick-prompt wrappers
+async function runAIAnalysis() {
+  quickPrompt('根據我的 InBody 報告和所有追蹤數據，幫我做完整分析並給出訓練日和休息日的詳細每日飲食計畫，包含每餐的食物、克數、時間和營養素');
+}
 async function runWeeklyReport() {
-  const data = await getRecentData();
-  document.getElementById('ai-loading').classList.add('visible');
-  document.getElementById('ai-response').classList.remove('visible');
-
-  const bodyText = data.bodyRecords.map(r => `${r.recorded_date}: 起床${r.morning_weight||'-'}kg 睡前${r.evening_weight||'-'}kg 腰圍${r.waist_cm||'-'}cm`).join('\n') || '無記錄';
-  const nutritionText = data.nutritionSummary.map(d => `${d.date}: ${d.totals.cal}kcal 蛋白${Math.round(d.totals.protein)}g 碳水${Math.round(d.totals.carb)}g 脂肪${Math.round(d.totals.fat)}g`).join('\n');
-  const workoutText = data.workoutRecords.map(r => `${r.recorded_date} [${r.day_label}]: ${(r.exercises||[]).map(e=>`${e.name}(${e.sets.length}組)`).join(', ')}`).join('\n') || '無訓練記錄';
-  const goal = document.getElementById('ai-goal').value;
-
-  const apiKey = localStorage.getItem('ht_api_key') || '';
-  if (!apiKey) {
-    document.getElementById('ai-response').textContent = '❌ 請先填入你的 Anthropic API Key';
-    document.getElementById('ai-response').classList.add('visible');
-    document.getElementById('ai-loading').classList.remove('visible');
-    return;
-  }
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-allow-browser': 'true' },
-      body: JSON.stringify({ model:'claude-sonnet-4-5-20251001', max_tokens:2000, system:'你是一位專業運動營養師，負責每週追蹤客戶的健身進度並提供回饋。', messages:[{ role:'user', content:`請根據以下本週數據提供週度追蹤報告：\n\n目標：${goal}\n\n【體態數據】\n${bodyText}\n\n【飲食記錄（7天平均）】\n${nutritionText}\n\n【訓練記錄】\n${workoutText}\n\n請用繁體中文提供：\n📊 本週總結\n✅ 做得好的地方\n⚠️ 需要改進的地方\n🎯 下週行動計畫（3個具體目標）\n💡 本週營養師小貼士` }] })
-    });
-    const result = await response.json();
-    if (result.error) throw new Error(result.error.message);
-    const text = result.content?.map(c => c.text||'').join('') || '無法取得回應';
-    document.getElementById('ai-response').textContent = text;
-    document.getElementById('ai-response').classList.add('visible');
-  } catch(e) {
-    document.getElementById('ai-response').textContent = '❌ 錯誤：' + e.message;
-    document.getElementById('ai-response').classList.add('visible');
-  } finally {
-    document.getElementById('ai-loading').classList.remove('visible');
-  }
+  quickPrompt('幫我做本週的體重、飲食、訓練綜合追蹤報告，分析做得好和需要改進的地方，並給出下週的行動計畫');
 }
 
-
-
-
-// Convert expanded sets array → grouped compact display badges
-function compactSets(sets) {
-  if (!sets || !sets.length) return '';
-  // Group by label+weight+reps
-  const groups = {};
-  sets.forEach(s => {
-    const key = (s.label||'') + '|' + s.weight + '|' + s.reps;
-    if (!groups[key]) groups[key] = { label: s.label||'', weight: s.weight, reps: s.reps, count: 0 };
-    groups[key].count++;
-  });
-  return Object.values(groups).map(g => {
-    const label = g.label ? `<span style="color:var(--text-dim);font-size:10px;margin-right:2px">${g.label}</span>` : '';
-    return `<span class="set-badge">${label}${g.count}×${g.reps} @ ${g.weight}kg</span>`;
-  }).join('');
+async function getRecentData() {
+  const bodyRecords = await dbSelect('body_records', 'recorded_date');
+  const workoutRecords = await dbSelect('workout_records', 'recorded_date');
+  return { bodyRecords: bodyRecords.slice(0,7), workoutRecords: workoutRecords.slice(0,7), nutritionSummary: [] };
 }
-
-// ════════════════════════════════════════════
-// MODAL SYSTEM
-// ════════════════════════════════════════════
-let modalCallback = null;
-function closeModal() { document.getElementById('edit-modal').style.display = 'none'; modalCallback = null; }
-function openModal(title, bodyHtml, cb) {
-  document.getElementById('modal-title').textContent = title;
-  document.getElementById('modal-body').innerHTML = bodyHtml;
-  document.getElementById('edit-modal').style.display = 'flex';
-  modalCallback = cb;
-}
-function submitModal() { if (modalCallback) modalCallback(); }
-
-// ── Edit Body Record ──
-function editBodyRecord(date, morning, evening, waist, note) {
-  openModal('編輯體態記錄 — ' + date, `
-    <div class="form-row">
-      <div class="form-group"><label>起床體重 (kg)</label><input type="number" step="0.1" id="em-morning" value="${morning !== 'null' ? morning : ''}"></div>
-      <div class="form-group"><label>睡前體重 (kg)</label><input type="number" step="0.1" id="em-evening" value="${evening !== 'null' ? evening : ''}"></div>
-      <div class="form-group"><label>腰圍 (cm)</label><input type="number" step="0.1" id="em-waist" value="${waist !== 'null' ? waist : ''}"></div>
-    </div>
-    <div class="form-group"><label>備註</label><input type="text" id="em-note" value="${note}"></div>
-  `, async () => {
-    const m = parseFloat(document.getElementById('em-morning').value) || null;
-    const e2 = parseFloat(document.getElementById('em-evening').value) || null;
-    const w = parseFloat(document.getElementById('em-waist').value) || null;
-    const n = document.getElementById('em-note').value;
-    await dbUpsert('body_records', { recorded_date: date, morning_weight: m, evening_weight: e2, waist_cm: w, note: n });
-    closeModal();
-    renderBodyHistory();
-  });
-}
-
-// ── Edit Food Record ──
-function editFoodRecord(id, name, grams, meal, cal, protein, carb, fat, fiber, sodium) {
-  // Recalculate per-100g values from actual amounts
-  const ratio = grams / 100;
-  const c100 = ratio ? Math.round(cal / ratio) : 0;
-  const p100 = ratio ? Math.round(protein / ratio * 10) / 10 : 0;
-  const cb100 = ratio ? Math.round(carb / ratio * 10) / 10 : 0;
-  const f100 = ratio ? Math.round(fat / ratio * 10) / 10 : 0;
-  const fi100 = ratio ? Math.round(fiber / ratio * 10) / 10 : 0;
-  const s100 = ratio ? Math.round(sodium / ratio) : 0;
-  openModal('編輯食物記錄', `
-    <div class="form-row">
-      <div class="form-group" style="flex:2"><label>食物名稱</label><input type="text" id="ef-name" value="${name}"></div>
-      <div class="form-group"><label>克數 (g)</label><input type="number" id="ef-grams" value="${grams}"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>熱量/100g</label><input type="number" id="ef-cal" value="${c100}"></div>
-      <div class="form-group"><label>蛋白質/100g</label><input type="number" id="ef-protein" value="${p100}"></div>
-      <div class="form-group"><label>碳水/100g</label><input type="number" id="ef-carb" value="${cb100}"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>脂肪/100g</label><input type="number" id="ef-fat" value="${f100}"></div>
-      <div class="form-group"><label>纖維/100g</label><input type="number" id="ef-fiber" value="${fi100}"></div>
-      <div class="form-group"><label>餐別</label><select id="ef-meal"><option${meal==='早餐'?' selected':''}>早餐</option><option${meal==='午餐'?' selected':''}>午餐</option><option${meal==='晚餐'?' selected':''}>晚餐</option><option${meal==='點心'?' selected':''}>點心</option></select></div>
-    </div>
-  `, async () => {
-    const newName = document.getElementById('ef-name').value.trim();
-    const newGrams = parseFloat(document.getElementById('ef-grams').value);
-    const r2 = newGrams / 100;
-    const newCal = Math.round((parseFloat(document.getElementById('ef-cal').value)||0) * r2);
-    const newP = Math.round((parseFloat(document.getElementById('ef-protein').value)||0) * r2 * 10) / 10;
-    const newCb = Math.round((parseFloat(document.getElementById('ef-carb').value)||0) * r2 * 10) / 10;
-    const newF = Math.round((parseFloat(document.getElementById('ef-fat').value)||0) * r2 * 10) / 10;
-    const newFi = Math.round((parseFloat(document.getElementById('ef-fiber').value)||0) * r2 * 10) / 10;
-    const newMeal = document.getElementById('ef-meal').value;
-    if (!SUPABASE_CONFIGURED) {
-      const date = document.getElementById('nutrition-date').value || today();
-      let rows = lsLoad('nutrition_records');
-      const idx = rows.findIndex(r => r.id == id);
-      if (idx >= 0) rows[idx] = { ...rows[idx], food_name: newName, grams: newGrams, meal: newMeal, cal: newCal, protein: newP, carb: newCb, fat: newF, fiber: newFi };
-      lsSave('nutrition_records', rows);
-      closeModal(); renderNutritionDay(); return;
-    }
-    const { error } = await db.from('nutrition_records').update({ food_name: newName, grams: newGrams, meal: newMeal, cal: newCal, protein: newP, carb: newCb, fat: newF, fiber: newFi }).eq('id', id).eq('user_id', currentUser.id);
-    if (!error) { setSyncStatus('synced', '✓ 已更新'); closeModal(); renderNutritionDay(); }
-    else { setSyncStatus('error', '✗ 更新失敗'); }
-  });
-}
-
-// ── Edit Workout Record ──
-async function editWorkoutRecord(id) {
-  let record;
-  if (!SUPABASE_CONFIGURED) {
-    record = lsLoad('workout_records').find(r => r.id == id);
-  } else {
-    const { data } = await db.from('workout_records').select('*').eq('id', id).eq('user_id', currentUser.id).single();
-    record = data;
-  }
-  if (!record) return;
-
-  const exHtml = (record.exercises||[]).map((ex, ei) => `
-    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px" id="ew-ex-${ei}">
-      <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
-        <input type="text" class="ew-name" value="${ex.name}" style="flex:1;font-size:14px;font-weight:600">
-        <button class="btn btn-danger btn-sm" onclick="document.getElementById('ew-ex-${ei}').remove()" style="padding:4px 8px">✕</button>
-      </div>
-      <div style="display:grid;grid-template-columns:3fr 1fr 1fr 2fr auto;gap:6px;margin-bottom:4px;font-size:10px;color:var(--text-dim)">
-        <span>名稱</span><span style="text-align:center">組數</span><span style="text-align:center">次數</span><span style="text-align:center">重量</span><span></span>
-      </div>
-      ${(() => {
-        // Compact: group by label+weight+reps
-        const groups = {};
-        (ex.sets||[]).forEach(s => {
-          const key = (s.label||'') + '|' + s.weight + '|' + s.reps;
-          if (!groups[key]) groups[key] = { label: s.label||'', weight: s.weight, reps: s.reps, count: 0 };
-          groups[key].count++;
-        });
-        return Object.values(groups).map(g =>
-          `<div style="display:grid;grid-template-columns:3fr 1fr 1fr 2fr auto;gap:6px;margin-bottom:5px;align-items:center" class="ew-set">
-            <input type="text" class="ew-label" value="${g.label}" placeholder="熱身/工作組" style="font-size:12px">
-            <input type="number" class="ew-sets-n" value="${g.count}" min="1" placeholder="組" style="font-size:12px;text-align:center">
-            <input type="number" class="ew-reps" value="${g.reps}" placeholder="次" style="font-size:12px;text-align:center">
-            <input type="number" class="ew-weight" value="${g.weight}" placeholder="kg" step="0.5" style="font-size:12px;text-align:center">
-            <button class="btn btn-danger btn-sm" onclick="this.closest('.ew-set').remove()" style="padding:4px 7px;font-size:11px">✕</button>
-          </div>`
-        ).join('');
-      })()}
-    </div>`).join('');
-
-  openModal('編輯訓練記錄 — ' + record.recorded_date, `
-    <div style="font-size:12px;color:var(--text-dim);margin-bottom:12px">${record.day_label}</div>
-    <div id="ew-exercises">${exHtml}</div>
-  `, async () => {
-    const exercises = [];
-    document.querySelectorAll('[id^="ew-ex-"]').forEach(block => {
-      const name = block.querySelector('.ew-name').value.trim();
-      if (!name) return;
-      const sets = [];
-      block.querySelectorAll('.ew-set').forEach(row => {
-        const lbl = (row.querySelector('.ew-label')?.value||'').trim();
-        const nSets = parseInt(row.querySelector('.ew-sets-n')?.value)||1;
-        const nReps = parseInt(row.querySelector('.ew-reps')?.value)||0;
-        const w = parseFloat(row.querySelector('.ew-weight')?.value)||0;
-        if (w > 0 || nReps > 0) {
-          for (let i = 0; i < nSets; i++) sets.push({ label: lbl, weight: w, reps: nReps });
-        }
-      });
-      exercises.push({ name, sets });
-    });
-    if (!SUPABASE_CONFIGURED) {
-      let rows = lsLoad('workout_records');
-      const idx = rows.findIndex(r => r.id == id);
-      if (idx >= 0) rows[idx] = { ...rows[idx], exercises };
-      lsSave('workout_records', rows);
-      closeModal(); renderWorkoutHistory(); return;
-    }
-    const { error } = await db.from('workout_records').update({ exercises }).eq('id', id).eq('user_id', currentUser.id);
-    if (!error) { setSyncStatus('synced', '✓ 已更新'); closeModal(); renderWorkoutHistory(); }
-    else { setSyncStatus('error', '✗ 更新失敗'); }
-  });
-}
-
 
 // ════════════════════════════════════════════
 // APPLY AI DIET PLAN TO NUTRITION PAGE
@@ -1854,11 +1824,24 @@ function renderMiniExChart(name, map) {
 function saveApiKey(val) {
   localStorage.setItem('ht_api_key', val.trim());
   const ind = document.getElementById('key-saved-indicator');
-  if (val.trim()) { ind.style.display = 'inline'; setTimeout(() => ind.style.display = 'none', 2000); }
+  const status = document.getElementById('api-key-status');
+  if (val.trim()) {
+    if (ind) { ind.style.display = 'inline'; setTimeout(() => ind.style.display = 'none', 2000); }
+    if (status) { status.textContent = '✓ 已設定'; status.style.color = 'var(--accent)'; }
+  }
 }
 function loadApiKey() {
   const k = localStorage.getItem('ht_api_key') || '';
-  if (k) document.getElementById('ai-api-key').value = k;
+  const input = document.getElementById('ai-api-key');
+  const status = document.getElementById('api-key-status');
+  if (input) input.value = k;
+  if (status) status.textContent = k ? '✓ 已設定' : '未設定 — 點此填入';
+  if (status) status.style.color = k ? 'var(--accent)' : 'var(--accent4)';
+  // Auto-open if not set
+  if (!k) {
+    const body = document.getElementById('api-key-body');
+    if (body) body.style.display = 'block';
+  }
 }
 
 // ════════════════════════════════════════════
