@@ -1105,7 +1105,7 @@ async function autoQueryNutrition() {
       method: 'POST',
       headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01' },
       body: JSON.stringify({
-        model:'claude-haiku-4-5-20251001', max_tokens:300,
+        model:'claude-haiku-4-5', max_tokens:300,
         messages:[{ role:'user', content:`請查詢「${name}」每100g的營養素。綜合多個可靠來源（食品成分資料庫、USDA、衛福部等）給出平均值。只回傳JSON格式，不要其他文字：{"cal":數字,"protein":數字,"carb":數字,"fat":數字}` }]
       })
     });
@@ -1913,7 +1913,7 @@ ${dataCtx}
       method: 'POST',
       headers: { 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5-20251001',
+        model: 'claude-sonnet-4-5',
         max_tokens: 2000,
         system: systemPrompt,
         messages: msgs
@@ -1964,7 +1964,7 @@ async function applyAIDietPlan() {
       method: 'POST',
       headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01' },
       body: JSON.stringify({
-        model:'claude-haiku-4-5-20251001', max_tokens:200,
+        model:'claude-haiku-4-5', max_tokens:200,
         messages:[{ role:'user', content:`從以下 AI 分析中提取建議的每日營養素目標數字。只回傳 JSON，不要其他文字：{"cal":數字,"protein":數字,"carb":數字,"fat":數字}
 
 分析內容：
