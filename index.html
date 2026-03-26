@@ -1553,10 +1553,8 @@ async function buildDataContext() {
     if (t.cal > 0) nutSummary.push(`${ds}: ${Math.round(t.cal)}kcal 蛋白${Math.round(t.protein)}g 碳水${Math.round(t.carb)}g 脂肪${Math.round(t.fat)}g`);
   }
 
-  const weightTrend = recentBody.map(r => `${r.recorded_date} 起床:${r.morning_weight||'-'}kg 睡前:${r.evening_weight||'-'}kg 腰圍:${r.waist_cm||'-'}cm`).join('
-') || '尚無記錄';
-  const workoutTrend = recentWorkout.map(r => `${r.recorded_date} [${r.day_label}]: ${(r.exercises||[]).map(e=>`${e.name}(${compactSets(e.sets)})`).join(', ')}`).join('
-') || '尚無記錄';
+  const weightTrend = recentBody.map(r => `${r.recorded_date} 起床:${r.morning_weight||'-'}kg 睡前:${r.evening_weight||'-'}kg 腰圍:${r.waist_cm||'-'}cm`).join('\n') || '尚無記錄';
+  const workoutTrend = recentWorkout.map(r => `${r.recorded_date} [${r.day_label}]: ${(r.exercises||[]).map(e=>`${e.name}(${compactSets(e.sets)})`).join(', ')}`).join('\n') || '尚無記錄';
 
   const goal = document.getElementById('ai-goal')?.value || '增肌減脂';
   const height = document.getElementById('ai-height')?.value || '';
@@ -1572,8 +1570,7 @@ async function buildDataContext() {
 ${weightTrend}
 
 【近14天飲食記錄】
-${nutSummary.join('
-') || '尚無記錄'}
+${nutSummary.join('\n') || '尚無記錄'}
 
 【近14筆訓練記錄】
 訓練分化：胸+三頭 / 背+二頭 / 腿+腹肌 / 肩+小臂 / 休息 / 上半身 / 有氧
