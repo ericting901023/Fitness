@@ -1510,8 +1510,7 @@ function appendChatMsg(role, text) {
   div.className = `chat-msg ${role}`;
   div.innerHTML = `
     <div class="chat-avatar ${role}">${isUser ? initials : '🤖'}</div>
-    <div class="chat-bubble">${text.replace(/
-/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<b>$1</b>').replace(/•/g,'•')}</div>`;
+    <div class="chat-bubble">${text.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<b>$1</b>').replace(/•/g,'•')}</div>`;
   messages.appendChild(div);
   messages.scrollTop = messages.scrollHeight;
 }
