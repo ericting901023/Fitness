@@ -686,8 +686,15 @@
       </div>
 
       <div class="card">
-        <div class="card-header"><div class="card-title">訓練記錄</div><span id="workout-count" class="badge badge-blue">0 筆</span></div>
-        <div id="workout-history"></div>
+        <div class="card-header" style="cursor:pointer" onclick="toggleWorkoutHistory()">
+          <div class="card-title">訓練記錄</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="workout-count" class="badge badge-blue">0 筆</span>
+            <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openWorkoutModal()" style="font-size:11px">🔍 查看 / 篩選</button>
+            <span id="workout-toggle-icon" style="color:var(--text-dim);font-size:12px">▼</span>
+          </div>
+        </div>
+        <div id="workout-history" style="display:none"></div>
       </div>
     </div>
 
@@ -797,6 +804,27 @@
       <div class="ai-loading" id="ai-loading" style="display:none"><div class="spinner"></div><span>AI 分析中...</span></div>
     </div>
 
+  </div>
+
+  <!-- WORKOUT FILTER MODAL -->
+  <div id="workout-modal" class="modal-backdrop" style="display:none" onclick="if(event.target===this)document.getElementById('workout-modal').style.display='none'">
+    <div class="modal-box" style="max-width:600px;width:100%">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="modal-title" style="margin-bottom:0">訓練記錄查看</div>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('workout-modal').style.display='none'">關閉</button>
+      </div>
+      <!-- Day filter tabs -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
+        <button class="chart-tab active" onclick="filterWorkoutDay('all', this)" style="font-size:11px">全部</button>
+        <button class="chart-tab" onclick="filterWorkoutDay('胸肌＋三頭肌', this)" style="font-size:11px">胸＋三頭</button>
+        <button class="chart-tab" onclick="filterWorkoutDay('背肌＋二頭肌', this)" style="font-size:11px">背＋二頭</button>
+        <button class="chart-tab" onclick="filterWorkoutDay('腿部＋腹肌', this)" style="font-size:11px">腿＋腹肌</button>
+        <button class="chart-tab" onclick="filterWorkoutDay('肩膀＋上小臂', this)" style="font-size:11px">肩＋小臂</button>
+        <button class="chart-tab" onclick="filterWorkoutDay('上半身訓練', this)" style="font-size:11px">上半身</button>
+        <button class="chart-tab" onclick="filterWorkoutDay('有氧', this)" style="font-size:11px">有氧</button>
+      </div>
+      <div id="workout-modal-list" style="max-height:55vh;overflow-y:auto"></div>
+    </div>
   </div>
 
   <!-- EDIT MODAL -->
@@ -942,7 +970,7 @@ async function dbUpsert(table, data) {
     return;
   }
   setSyncStatus('saving', '⟳ 同步中...');
-  const { error } = await db.from(table).upsert({ ...data, user_id: currentUser.id });
+  const { error } = await db.from(table).upsert({ ...data, user_id: currentUser.id }, { onConflict: 'user_id,recorded_date' });
   if (error) { setSyncStatus('error', '✗ 同步失敗'); console.error(error); }
   else { setSyncStatus('synced', '✓ 已同步至所有裝置'); }
 }
@@ -1414,14 +1442,19 @@ async function saveWorkout() {
 
 async function renderWorkoutHistory() {
   const records = await dbSelect('workout_records', 'recorded_date');
+  _allWorkoutRecords = records;
   document.getElementById('workout-count').textContent = records.length + ' 筆';
   const container = document.getElementById('workout-history');
-  if (!records.length) { container.innerHTML = '<div class="empty-state"><div class="empty-icon">🏋️</div>尚無訓練記錄</div>'; return; }
-
+  if (!records.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">🏋️</div>尚無訓練記錄</div>';
+    renderMiniWorkoutChart(records);
+    return;
+  }
   renderMiniWorkoutChart(records);
-  container.innerHTML = records.slice(0, 20).map((r, idx) => `
-    <div class="exercise-block" style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+  // Show only last 5 in inline view (collapsed by default)
+  container.innerHTML = records.slice(0, 5).map(r => `
+    <div class="exercise-block" style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <div>
           <span class="badge badge-blue">${r.day_label}</span>
           <span style="margin-left:8px;font-size:12px;color:var(--text-dim);font-family:'Space Mono',monospace">${r.recorded_date}</span>
@@ -1432,11 +1465,11 @@ async function renderWorkoutHistory() {
         </div>
       </div>
       ${(r.exercises||[]).map(ex => `
-        <div style="margin-bottom:8px">
-          <div style="font-size:13px;font-weight:600;margin-bottom:4px">${ex.name}</div>
+        <div style="margin-bottom:6px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px">${ex.name}</div>
           <div style="display:flex;flex-wrap:wrap;gap:4px">${compactSets(ex.sets)}</div>
         </div>`).join('')}
-    </div>`).join('');
+    </div>`).join('') + (records.length > 5 ? `<div style="text-align:center;padding:8px 0;font-size:12px;color:var(--text-dim)">還有 ${records.length - 5} 筆記錄，點「查看/篩選」查看全部</div>` : '');
 }
 
 
@@ -1606,6 +1639,79 @@ async function editWorkoutRecord(id) {
     if (!error) { setSyncStatus('synced', '✓ 已更新'); closeModal(); renderWorkoutHistory(); }
     else { setSyncStatus('error', '✗ 更新失敗'); }
   });
+}
+
+
+// ════════════════════════════════════════════
+// WORKOUT HISTORY MODAL + TOGGLE
+// ════════════════════════════════════════════
+let _allWorkoutRecords = [];
+
+function toggleWorkoutHistory() {
+  const el = document.getElementById('workout-history');
+  const icon = document.getElementById('workout-toggle-icon');
+  const isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? 'block' : 'none';
+  icon.textContent = isHidden ? '▲' : '▼';
+}
+
+function openWorkoutModal() {
+  document.getElementById('workout-modal').style.display = 'flex';
+  filterWorkoutDay('all', document.querySelector('#workout-modal .chart-tab'));
+}
+
+function filterWorkoutDay(dayLabel, btn) {
+  document.querySelectorAll('#workout-modal .chart-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  const records = dayLabel === 'all'
+    ? _allWorkoutRecords
+    : _allWorkoutRecords.filter(r => r.day_label === dayLabel);
+  renderWorkoutModalList(records);
+}
+
+function renderWorkoutModalList(records) {
+  const container = document.getElementById('workout-modal-list');
+  if (!records.length) {
+    container.innerHTML = '<div class="empty-state" style="padding:20px"><div class="empty-icon">🏋️</div>此分類尚無記錄</div>';
+    return;
+  }
+  container.innerHTML = records.slice(0, 30).map(r => `
+    <div class="exercise-block" style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div>
+          <span class="badge badge-blue">${r.day_label}</span>
+          <span style="margin-left:8px;font-size:12px;color:var(--text-dim);font-family:'Space Mono',monospace">${r.recorded_date}</span>
+        </div>
+        <div class="action-btns">
+          <button class="btn btn-edit btn-sm" onclick="document.getElementById('workout-modal').style.display='none';editWorkoutRecord(${r.id})">編輯</button>
+          <button class="btn btn-danger btn-sm" onclick="confirmDeleteWorkoutModal(${r.id})">刪除</button>
+        </div>
+      </div>
+      ${(r.exercises||[]).map(ex => `
+        <div style="margin-bottom:8px">
+          <div style="font-size:13px;font-weight:600;margin-bottom:4px">${ex.name}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px">${compactSets(ex.sets)}</div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+async function confirmDeleteWorkoutModal(id) {
+  if (!confirm('確定刪除此筆訓練記錄？')) return;
+  if (!SUPABASE_CONFIGURED) {
+    let rows = lsLoad('workout_records').filter(r => r.id != id);
+    lsSave('workout_records', rows);
+    _allWorkoutRecords = _allWorkoutRecords.filter(r => r.id != id);
+    setSyncStatus('synced', '✓ 已刪除');
+    filterWorkoutDay('all', document.querySelector('#workout-modal .chart-tab'));
+    renderWorkoutHistory(); return;
+  }
+  const { error } = await db.from('workout_records').delete().eq('id', id).eq('user_id', currentUser.id);
+  if (!error) {
+    _allWorkoutRecords = _allWorkoutRecords.filter(r => r.id != id);
+    setSyncStatus('synced', '✓ 已同步');
+    filterWorkoutDay('all', document.querySelector('#workout-modal .chart-tab.active') || document.querySelector('#workout-modal .chart-tab'));
+    renderWorkoutHistory();
+  }
 }
 
 async function deleteWorkout(id) {
@@ -1807,7 +1913,7 @@ ${dataCtx}
       method: 'POST',
       headers: { 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-allow-browser':'true' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-4-5-20251001',
         max_tokens: 2000,
         system: systemPrompt,
         messages: msgs
