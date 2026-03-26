@@ -1439,6 +1439,175 @@ async function renderWorkoutHistory() {
     </div>`).join('');
 }
 
+
+// ════════════════════════════════════════════
+// COMPACT SETS DISPLAY
+// ════════════════════════════════════════════
+function compactSets(sets) {
+  if (!sets || !sets.length) return '';
+  const groups = {};
+  sets.forEach(s => {
+    const key = (s.label||'') + '|' + s.weight + '|' + s.reps;
+    if (!groups[key]) groups[key] = { label: s.label||'', weight: s.weight, reps: s.reps, count: 0 };
+    groups[key].count++;
+  });
+  return Object.values(groups).map(g => {
+    const label = g.label ? `<span style="color:var(--text-dim);font-size:10px;margin-right:2px">${g.label}</span>` : '';
+    return `<span class="set-badge">${label}${g.count}×${g.reps} @ ${g.weight}kg</span>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════
+// MODAL SYSTEM
+// ════════════════════════════════════════════
+let modalCallback = null;
+function closeModal() { document.getElementById('edit-modal').style.display = 'none'; modalCallback = null; }
+function openModal(title, bodyHtml, cb) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = bodyHtml;
+  document.getElementById('edit-modal').style.display = 'flex';
+  modalCallback = cb;
+}
+function submitModal() { if (modalCallback) modalCallback(); }
+
+// ── Edit Body Record ──
+function editBodyRecord(date, morning, evening, waist, note) {
+  openModal('編輯體態記錄 — ' + date, `
+    <div class="form-row">
+      <div class="form-group"><label>起床體重 (kg)</label><input type="number" step="0.1" id="em-morning" value="${morning !== 'null' ? morning : ''}"></div>
+      <div class="form-group"><label>睡前體重 (kg)</label><input type="number" step="0.1" id="em-evening" value="${evening !== 'null' ? evening : ''}"></div>
+      <div class="form-group"><label>腰圍 (cm)</label><input type="number" step="0.1" id="em-waist" value="${waist !== 'null' ? waist : ''}"></div>
+    </div>
+    <div class="form-group"><label>備註</label><input type="text" id="em-note" value="${note}"></div>
+  `, async () => {
+    const m = parseFloat(document.getElementById('em-morning').value) || null;
+    const e2 = parseFloat(document.getElementById('em-evening').value) || null;
+    const w = parseFloat(document.getElementById('em-waist').value) || null;
+    const n = document.getElementById('em-note').value;
+    await dbUpsert('body_records', { recorded_date: date, morning_weight: m, evening_weight: e2, waist_cm: w, note: n });
+    closeModal();
+    renderBodyHistory();
+  });
+}
+
+// ── Edit Food Record ──
+function editFoodRecord(id, name, grams, meal, cal, protein, carb, fat) {
+  const ratio = grams / 100;
+  const c100 = ratio ? Math.round(cal / ratio) : 0;
+  const p100 = ratio ? Math.round(protein / ratio * 10) / 10 : 0;
+  const cb100 = ratio ? Math.round(carb / ratio * 10) / 10 : 0;
+  const f100 = ratio ? Math.round(fat / ratio * 10) / 10 : 0;
+  openModal('編輯食物記錄', `
+    <div class="form-row">
+      <div class="form-group" style="flex:2"><label>食物名稱</label><input type="text" id="ef-name" value="${name}"></div>
+      <div class="form-group"><label>克數 (g)</label><input type="number" id="ef-grams" value="${grams}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>熱量/100g</label><input type="number" id="ef-cal" value="${c100}"></div>
+      <div class="form-group"><label>蛋白質/100g</label><input type="number" id="ef-protein" value="${p100}"></div>
+      <div class="form-group"><label>碳水/100g</label><input type="number" id="ef-carb" value="${cb100}"></div>
+      <div class="form-group"><label>脂肪/100g</label><input type="number" id="ef-fat" value="${f100}"></div>
+    </div>
+    <div class="form-group"><label>餐別</label><select id="ef-meal">
+      <option${meal==='早餐'?' selected':''}>早餐</option>
+      <option${meal==='午餐'?' selected':''}>午餐</option>
+      <option${meal==='晚餐'?' selected':''}>晚餐</option>
+      <option${meal==='點心'?' selected':''}>點心</option>
+    </select></div>
+  `, async () => {
+    const newName = document.getElementById('ef-name').value.trim();
+    const newGrams = parseFloat(document.getElementById('ef-grams').value);
+    const r2 = newGrams / 100;
+    const newCal = Math.round((parseFloat(document.getElementById('ef-cal').value)||0) * r2);
+    const newP = Math.round((parseFloat(document.getElementById('ef-protein').value)||0) * r2 * 10) / 10;
+    const newCb = Math.round((parseFloat(document.getElementById('ef-carb').value)||0) * r2 * 10) / 10;
+    const newF = Math.round((parseFloat(document.getElementById('ef-fat').value)||0) * r2 * 10) / 10;
+    const newMeal = document.getElementById('ef-meal').value;
+    if (!SUPABASE_CONFIGURED) {
+      const date = document.getElementById('nutrition-date').value || today();
+      let rows = lsLoad('nutrition_records');
+      const idx = rows.findIndex(r => r.id == id);
+      if (idx >= 0) rows[idx] = { ...rows[idx], food_name: newName, grams: newGrams, meal: newMeal, cal: newCal, protein: newP, carb: newCb, fat: newF };
+      lsSave('nutrition_records', rows);
+      closeModal(); renderNutritionDay(); return;
+    }
+    const { error } = await db.from('nutrition_records').update({ food_name: newName, grams: newGrams, meal: newMeal, cal: newCal, protein: newP, carb: newCb, fat: newF }).eq('id', id).eq('user_id', currentUser.id);
+    if (!error) { setSyncStatus('synced', '✓ 已更新'); closeModal(); renderNutritionDay(); }
+    else { setSyncStatus('error', '✗ 更新失敗'); }
+  });
+}
+
+// ── Edit Workout Record ──
+async function editWorkoutRecord(id) {
+  let record;
+  if (!SUPABASE_CONFIGURED) {
+    record = lsLoad('workout_records').find(r => r.id == id);
+  } else {
+    const { data } = await db.from('workout_records').select('*').eq('id', id).eq('user_id', currentUser.id).single();
+    record = data;
+  }
+  if (!record) return;
+  const exHtml = (record.exercises||[]).map((ex, ei) => {
+    const groups = {};
+    (ex.sets||[]).forEach(s => {
+      const key = (s.label||'') + '|' + s.weight + '|' + s.reps;
+      if (!groups[key]) groups[key] = { label: s.label||'', weight: s.weight, reps: s.reps, count: 0 };
+      groups[key].count++;
+    });
+    const setsHtml = Object.values(groups).map(g =>
+      `<div style="display:grid;grid-template-columns:3fr 1fr 1fr 2fr auto;gap:6px;margin-bottom:5px;align-items:center" class="ew-set">
+        <input type="text" class="ew-label" value="${g.label}" placeholder="熱身/工作組" style="font-size:12px">
+        <input type="number" class="ew-sets-n" value="${g.count}" min="1" placeholder="組" style="font-size:12px;text-align:center">
+        <input type="number" class="ew-reps" value="${g.reps}" placeholder="次" style="font-size:12px;text-align:center">
+        <input type="number" class="ew-weight" value="${g.weight}" placeholder="kg" step="0.5" style="font-size:12px;text-align:center">
+        <button class="btn btn-danger btn-sm" onclick="this.closest('.ew-set').remove()" style="padding:4px 7px;font-size:11px">✕</button>
+      </div>`
+    ).join('');
+    return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px" id="ew-ex-${ei}">
+      <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+        <input type="text" class="ew-name" value="${ex.name}" style="flex:1;font-size:14px;font-weight:600">
+        <button class="btn btn-danger btn-sm" onclick="document.getElementById('ew-ex-${ei}').remove()" style="padding:4px 8px">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:3fr 1fr 1fr 2fr auto;gap:6px;margin-bottom:4px;font-size:10px;color:var(--text-dim)">
+        <span>名稱</span><span style="text-align:center">組數</span><span style="text-align:center">次數</span><span style="text-align:center">重量</span><span></span>
+      </div>
+      ${setsHtml}
+    </div>`;
+  }).join('');
+
+  openModal('編輯訓練記錄 — ' + record.recorded_date, `
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:12px">${record.day_label}</div>
+    <div id="ew-exercises">${exHtml}</div>
+  `, async () => {
+    const exercises = [];
+    document.querySelectorAll('[id^="ew-ex-"]').forEach(block => {
+      const name = block.querySelector('.ew-name').value.trim();
+      if (!name) return;
+      const sets = [];
+      block.querySelectorAll('.ew-set').forEach(row => {
+        const lbl = (row.querySelector('.ew-label')?.value||'').trim();
+        const nSets = parseInt(row.querySelector('.ew-sets-n')?.value)||1;
+        const nReps = parseInt(row.querySelector('.ew-reps')?.value)||0;
+        const w = parseFloat(row.querySelector('.ew-weight')?.value)||0;
+        if (w > 0 || nReps > 0) {
+          for (let i = 0; i < nSets; i++) sets.push({ label: lbl, weight: w, reps: nReps });
+        }
+      });
+      exercises.push({ name, sets });
+    });
+    if (!SUPABASE_CONFIGURED) {
+      let rows = lsLoad('workout_records');
+      const idx = rows.findIndex(r => r.id == id);
+      if (idx >= 0) rows[idx] = { ...rows[idx], exercises };
+      lsSave('workout_records', rows);
+      closeModal(); renderWorkoutHistory(); return;
+    }
+    const { error } = await db.from('workout_records').update({ exercises }).eq('id', id).eq('user_id', currentUser.id);
+    if (!error) { setSyncStatus('synced', '✓ 已更新'); closeModal(); renderWorkoutHistory(); }
+    else { setSyncStatus('error', '✗ 更新失敗'); }
+  });
+}
+
 async function deleteWorkout(id) {
   if (!confirm('確定刪除此筆訓練記錄？')) return;
   if (!SUPABASE_CONFIGURED) {
