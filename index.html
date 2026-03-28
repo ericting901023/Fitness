@@ -1380,8 +1380,8 @@ function addExerciseInput(name = '', prefillSets = []) {
   div.id = id;
   // Default warmup + working sets rows
   const defaultRows = prefillSets.length ? prefillSets : [
-    { label: '熱身', sets: 1, reps: 12, weight: '' },
-    { label: '工作組', sets: 4, reps: 10, weight: '' },
+    { label: '熱身', sets: 1, reps: 10, weight: '' },
+    { label: '正式組', sets: 4, reps: 10, weight: '' },
   ];
   div.innerHTML = `
     <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
@@ -1597,7 +1597,8 @@ function compactSets(sets) {
   });
   return Object.values(groups).map(g => {
     const label = g.label ? `<span style="color:var(--text-dim);font-size:10px;margin-right:2px">${g.label}</span>` : '';
-    return `<span class="set-badge">${label}${g.count}×${g.reps} @ ${g.weight}kg</span>`;
+    const weightStr = g.weight > 0 ? ` ${g.weight}kg` : '';
+    return `<span class="set-badge">${label}${g.count}×${g.reps}${weightStr}</span>`;
   }).join('');
 }
 
@@ -1632,6 +1633,32 @@ function editBodyRecord(date, morning, evening, waist, note) {
     closeModal();
     renderBodyHistory();
   });
+}
+
+
+function addEwSetRow() {
+  // Add a new set row to the last exercise block in edit modal
+  const exercises = document.querySelectorAll('#ew-exercises [id^="ew-ex-"]');
+  if (!exercises.length) return;
+  const lastEx = exercises[exercises.length - 1];
+  const container = lastEx.querySelector('.ew-sets-container') || lastEx;
+  const newRow = `<div style="display:grid;grid-template-columns:3fr 1fr 1fr 2.5fr auto;gap:6px;margin-bottom:5px;align-items:center" class="ew-set">
+    <input type="text" class="ew-label" value="正式組" placeholder="熱身/正式組" style="font-size:12px">
+    <input type="number" class="ew-sets-n" value="1" min="1" placeholder="組" style="font-size:12px;text-align:center">
+    <input type="number" class="ew-reps" value="" placeholder="次" style="font-size:12px;text-align:center">
+    <div style="display:flex;gap:3px;align-items:center">
+      <input type="number" class="ew-weight" value="" placeholder="重量" step="0.5" style="font-size:12px;text-align:center;width:100%">
+      <select class="ew-unit" style="font-size:11px;padding:6px 2px;width:50px;min-width:50px">
+        <option value="kg">kg</option>
+        <option value="lb">磅</option>
+      </select>
+    </div>
+    <button class="btn btn-danger btn-sm" onclick="this.closest('.ew-set').remove()" style="padding:4px 7px;font-size:11px">✕</button>
+  </div>`;
+  // Insert before the add button
+  const addBtn = document.querySelector('#modal-body button.btn-secondary');
+  if (addBtn) addBtn.insertAdjacentHTML('beforebegin', newRow);
+  else container.insertAdjacentHTML('beforeend', newRow);
 }
 
 // ── Edit Food Record ──
@@ -1699,11 +1726,17 @@ async function editWorkoutRecord(id) {
       groups[key].count++;
     });
     const setsHtml = Object.values(groups).map(g =>
-      `<div style="display:grid;grid-template-columns:3fr 1fr 1fr 2fr auto;gap:6px;margin-bottom:5px;align-items:center" class="ew-set">
-        <input type="text" class="ew-label" value="${g.label}" placeholder="熱身/工作組" style="font-size:12px">
+      `<div style="display:grid;grid-template-columns:3fr 1fr 1fr 2.5fr auto;gap:6px;margin-bottom:5px;align-items:center" class="ew-set">
+        <input type="text" class="ew-label" value="${g.label}" placeholder="熱身/正式組" style="font-size:12px">
         <input type="number" class="ew-sets-n" value="${g.count}" min="1" placeholder="組" style="font-size:12px;text-align:center">
         <input type="number" class="ew-reps" value="${g.reps}" placeholder="次" style="font-size:12px;text-align:center">
-        <input type="number" class="ew-weight" value="${g.weight}" placeholder="kg" step="0.5" style="font-size:12px;text-align:center">
+        <div style="display:flex;gap:3px;align-items:center">
+          <input type="number" class="ew-weight" value="${g.weight}" placeholder="重量" step="0.5" style="font-size:12px;text-align:center;width:100%">
+          <select class="ew-unit" style="font-size:11px;padding:6px 2px;width:50px;min-width:50px">
+            <option value="kg">kg</option>
+            <option value="lb">磅</option>
+          </select>
+        </div>
         <button class="btn btn-danger btn-sm" onclick="this.closest('.ew-set').remove()" style="padding:4px 7px;font-size:11px">✕</button>
       </div>`
     ).join('');
@@ -1722,6 +1755,7 @@ async function editWorkoutRecord(id) {
   openModal('編輯訓練記錄 — ' + record.recorded_date, `
     <div style="font-size:12px;color:var(--text-dim);margin-bottom:12px">${record.day_label}</div>
     <div id="ew-exercises">${exHtml}</div>
+    <button class="btn btn-secondary btn-sm" style="margin-top:8px;font-size:11px" onclick="addEwSetRow()">＋ 新增一行</button>
   `, async () => {
     const exercises = [];
     document.querySelectorAll('[id^="ew-ex-"]').forEach(block => {
@@ -2256,7 +2290,12 @@ function destroyChart(id) { if (chartInstances[id]) { chartInstances[id].destroy
 
 const CHART_DEFAULTS = {
   responsive: true, maintainAspectRatio: false,
-  plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+  plugins: {
+    legend: {
+      labels: { color: '#94a3b8', font: { size: 11 } },
+      onClick: () => {} // Disable legend click (prevents hiding lines)
+    }
+  },
   scales: {
     x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(42,47,62,0.8)' } },
     y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: 'rgba(42,47,62,0.8)' } }
