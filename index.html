@@ -1388,8 +1388,8 @@ function addExerciseInput(name = '', prefillSets = []) {
       <input type="text" placeholder="動作名稱" value="${name}" style="flex:1;font-size:14px;font-weight:600" class="ex-name">
       <button class="btn btn-danger btn-sm" onclick="document.getElementById('${id}').remove()" style="padding:5px 10px">✕</button>
     </div>
-    <div style="display:grid;grid-template-columns:3fr 1fr 1fr 2fr auto;gap:6px;margin-bottom:4px;font-size:10px;color:var(--text-dim);padding:0 2px">
-      <span>名稱</span><span style="text-align:center">組數</span><span style="text-align:center">次數</span><span style="text-align:center">重量</span><span style="text-align:center">單位</span><span></span>
+    <div style="display:grid;grid-template-columns:3fr 1fr 1fr 2.5fr auto;gap:6px;margin-bottom:4px;font-size:10px;color:var(--text-dim);padding:0 2px">
+      <span>名稱</span><span style="text-align:center">組數</span><span style="text-align:center">次數</span><span style="text-align:center">重量　單位</span><span></span>
     </div>
     <div class="sets-container">
       ${defaultRows.map((r,i) => buildSetRowHTML(id, r.label, r.sets, r.reps, r.weight)).join('')}
@@ -1704,7 +1704,11 @@ function editFoodRecord(id, name, grams, meal, cal, protein, carb, fat) {
     }
     const { error } = await db.from('nutrition_records').update({ food_name: newName, grams: newGrams, meal: newMeal, cal: newCal, protein: newP, carb: newCb, fat: newF }).eq('id', id).eq('user_id', currentUser.id);
     if (!error) { setSyncStatus('synced', '✓ 已更新'); closeModal(); renderNutritionDay(); }
-    else { setSyncStatus('error', '✗ 更新失敗'); }
+    else {
+      console.error('Food update error:', error);
+      setSyncStatus('error', '✗ 更新失敗');
+      alert('儲存失敗：' + (error.message || error.code || JSON.stringify(error)));
+    }
   });
 }
 
@@ -1745,8 +1749,8 @@ async function editWorkoutRecord(id) {
         <input type="text" class="ew-name" value="${ex.name}" style="flex:1;font-size:14px;font-weight:600">
         <button class="btn btn-danger btn-sm" onclick="document.getElementById('ew-ex-${ei}').remove()" style="padding:4px 8px">✕</button>
       </div>
-      <div style="display:grid;grid-template-columns:3fr 1fr 1fr 2fr auto;gap:6px;margin-bottom:4px;font-size:10px;color:var(--text-dim)">
-        <span>名稱</span><span style="text-align:center">組數</span><span style="text-align:center">次數</span><span style="text-align:center">重量</span><span></span>
+      <div style="display:grid;grid-template-columns:3fr 1fr 1fr 2.5fr auto;gap:6px;margin-bottom:4px;font-size:10px;color:var(--text-dim);padding:0 2px">
+        <span>名稱</span><span style="text-align:center">組數</span><span style="text-align:center">次數</span><span style="text-align:center">重量　單位</span><span></span>
       </div>
       ${setsHtml}
     </div>`;
@@ -1781,8 +1785,15 @@ async function editWorkoutRecord(id) {
       closeModal(); renderWorkoutHistory(); return;
     }
     const { error } = await db.from('workout_records').update({ exercises }).eq('id', id).eq('user_id', currentUser.id);
-    if (!error) { setSyncStatus('synced', '✓ 已更新'); closeModal(); renderWorkoutHistory(); }
-    else { setSyncStatus('error', '✗ 更新失敗'); }
+    if (!error) {
+      setSyncStatus('synced', '✓ 已更新');
+      closeModal();
+      renderWorkoutHistory();
+    } else {
+      console.error('Update error:', error);
+      setSyncStatus('error', '✗ 更新失敗');
+      alert('儲存失敗：' + (error.message || error.code || JSON.stringify(error)));
+    }
   });
 }
 
