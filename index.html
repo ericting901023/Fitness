@@ -1358,7 +1358,7 @@ const WORKOUT_DAYS = [
 let currentWorkoutDay = 0;
 let exerciseCount = 0;
 
-function selectWorkoutDay(day, el) {
+async function selectWorkoutDay(day, el) {
   currentWorkoutDay = day;
   document.querySelectorAll('.day-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
@@ -1367,8 +1367,42 @@ function selectWorkoutDay(day, el) {
   exerciseCount = 0;
   const container = document.getElementById('exercise-inputs');
   container.innerHTML = '';
-  if (day === 4) { container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim)">🛌 今天休息，好好恢復！</div>'; return; }
-  info.exercises.forEach(ex => addExerciseInput(ex));
+  if (day === 4) {
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-dim)">🛌 今天休息，好好恢復！</div>';
+    return;
+  }
+
+  // Load last record for this day type to prefill weights
+  let lastRecord = null;
+  try {
+    const allRecords = await dbSelect('workout_records', 'recorded_date', false);
+    lastRecord = allRecords.find(r => r.day_label === info.label);
+  } catch(e) {}
+
+  info.exercises.forEach(exName => {
+    let prefillSets = [];
+    if (lastRecord) {
+      const lastEx = (lastRecord.exercises || []).find(e => e.name === exName);
+      if (lastEx && lastEx.sets && lastEx.sets.length > 0) {
+        // Group sets back into rows (label+weight+reps)
+        const groups = {};
+        lastEx.sets.forEach(s => {
+          const key = (s.label||'') + '|' + s.weight + '|' + s.reps;
+          if (!groups[key]) groups[key] = { label: s.label||'', sets: 0, reps: s.reps, weight: s.weight, unit: s.unit||'kg' };
+          groups[key].sets++;
+        });
+        prefillSets = Object.values(groups);
+      }
+    }
+    addExerciseInput(exName, prefillSets);
+  });
+
+  if (lastRecord) {
+    const lastDate = lastRecord.recorded_date;
+    container.insertAdjacentHTML('afterbegin',
+      `<div style="font-size:11px;color:var(--accent2);padding:4px 2px;margin-bottom:8px">📋 已帶入上次記錄（${lastDate}），可直接修改</div>`
+    );
+  }
 }
 
 function addExerciseInput(name = '', prefillSets = []) {
@@ -1388,8 +1422,8 @@ function addExerciseInput(name = '', prefillSets = []) {
       <input type="text" placeholder="動作名稱" value="${name}" style="flex:1;font-size:14px;font-weight:600" class="ex-name">
       <button class="btn btn-danger btn-sm" onclick="document.getElementById('${id}').remove()" style="padding:5px 10px">✕</button>
     </div>
-    <div style="display:grid;grid-template-columns:3fr 1fr 1fr 2.5fr auto;gap:6px;margin-bottom:4px;font-size:10px;color:var(--text-dim);padding:0 2px">
-      <span>名稱</span><span style="text-align:center">組數</span><span style="text-align:center">次數</span><span style="text-align:center">重量　單位</span><span></span>
+    <div style="display:grid;grid-template-columns:3fr 1fr 1fr 1.7fr 0.8fr auto;gap:6px;margin-bottom:4px;font-size:10px;color:var(--text-dim);padding:0 2px">
+      <span>名稱</span><span style="text-align:center">組數</span><span style="text-align:center">次數</span><span style="text-align:center">重量</span><span style="text-align:center">單位</span><span></span>
     </div>
     <div class="sets-container">
       ${defaultRows.map((r,i) => buildSetRowHTML(id, r.label, r.sets, r.reps, r.weight)).join('')}
@@ -1400,17 +1434,15 @@ function addExerciseInput(name = '', prefillSets = []) {
 }
 
 function buildSetRowHTML(exId, label='', sets='', reps='', weight='', unit='kg') {
-  return `<div class="set-row" style="display:grid;grid-template-columns:3fr 1fr 1fr 2.5fr auto;gap:6px;margin-bottom:6px;align-items:center">
+  return `<div class="set-row" style="display:grid;grid-template-columns:3fr 1fr 1fr 1.7fr 0.8fr auto;gap:6px;margin-bottom:6px;align-items:center">
     <input type="text" class="sr-label" placeholder="熱身/正式組" value="${label}" style="font-size:12px;padding:7px 8px">
     <input type="number" class="sr-sets" placeholder="組" value="${sets}" min="1" max="20" style="font-size:13px;text-align:center;padding:7px 4px">
     <input type="number" class="sr-reps" placeholder="次" value="${reps}" min="1" max="100" style="font-size:13px;text-align:center;padding:7px 4px">
-    <div style="display:flex;gap:3px;align-items:center">
-      <input type="number" class="sr-weight" placeholder="重量" value="${weight}" step="0.5" style="font-size:13px;text-align:center;padding:7px 6px;width:100%">
-      <select class="sr-unit" style="font-size:11px;padding:7px 3px;width:52px;min-width:52px">
-        <option value="kg" ${unit==='kg'?'selected':''}>kg</option>
-        <option value="lb" ${unit==='lb'?'selected':''}>磅</option>
-      </select>
-    </div>
+    <input type="number" class="sr-weight" placeholder="重量" value="${weight}" step="0.5" style="font-size:13px;text-align:center;padding:7px 6px">
+    <select class="sr-unit" style="font-size:11px;padding:7px 3px;text-align:center">
+      <option value="kg" ${unit==='kg'?'selected':''}>kg</option>
+      <option value="lb" ${unit==='lb'?'selected':''}>磅</option>
+    </select>
     <button class="btn btn-danger btn-sm" onclick="this.closest('.set-row').remove()" style="padding:5px 8px;font-size:11px">✕</button>
   </div>`;
 }
@@ -1642,17 +1674,15 @@ function addEwSetRow() {
   if (!exercises.length) return;
   const lastEx = exercises[exercises.length - 1];
   const container = lastEx.querySelector('.ew-sets-container') || lastEx;
-  const newRow = `<div style="display:grid;grid-template-columns:3fr 1fr 1fr 2.5fr auto;gap:6px;margin-bottom:5px;align-items:center" class="ew-set">
+  const newRow = `<div style="display:grid;grid-template-columns:3fr 1fr 1fr 1.7fr 0.8fr auto;gap:6px;margin-bottom:5px;align-items:center" class="ew-set">
     <input type="text" class="ew-label" value="正式組" placeholder="熱身/正式組" style="font-size:12px">
     <input type="number" class="ew-sets-n" value="1" min="1" placeholder="組" style="font-size:12px;text-align:center">
     <input type="number" class="ew-reps" value="" placeholder="次" style="font-size:12px;text-align:center">
-    <div style="display:flex;gap:3px;align-items:center">
-      <input type="number" class="ew-weight" value="" placeholder="重量" step="0.5" style="font-size:12px;text-align:center;width:100%">
-      <select class="ew-unit" style="font-size:11px;padding:6px 2px;width:50px;min-width:50px">
-        <option value="kg">kg</option>
-        <option value="lb">磅</option>
-      </select>
-    </div>
+    <input type="number" class="ew-weight" value="" placeholder="重量" step="0.5" style="font-size:12px;text-align:center">
+    <select class="ew-unit" style="font-size:11px;padding:6px 2px;text-align:center">
+      <option value="kg">kg</option>
+      <option value="lb">磅</option>
+    </select>
     <button class="btn btn-danger btn-sm" onclick="this.closest('.ew-set').remove()" style="padding:4px 7px;font-size:11px">✕</button>
   </div>`;
   // Insert before the add button
@@ -1730,7 +1760,7 @@ async function editWorkoutRecord(id) {
       groups[key].count++;
     });
     const setsHtml = Object.values(groups).map(g =>
-      `<div style="display:grid;grid-template-columns:3fr 1fr 1fr 2.5fr auto;gap:6px;margin-bottom:5px;align-items:center" class="ew-set">
+      `<div style="display:grid;grid-template-columns:3fr 1fr 1fr 1.7fr 0.8fr auto;gap:6px;margin-bottom:5px;align-items:center" class="ew-set">
         <input type="text" class="ew-label" value="${g.label}" placeholder="熱身/正式組" style="font-size:12px">
         <input type="number" class="ew-sets-n" value="${g.count}" min="1" placeholder="組" style="font-size:12px;text-align:center">
         <input type="number" class="ew-reps" value="${g.reps}" placeholder="次" style="font-size:12px;text-align:center">
@@ -1749,8 +1779,8 @@ async function editWorkoutRecord(id) {
         <input type="text" class="ew-name" value="${ex.name}" style="flex:1;font-size:14px;font-weight:600">
         <button class="btn btn-danger btn-sm" onclick="document.getElementById('ew-ex-${ei}').remove()" style="padding:4px 8px">✕</button>
       </div>
-      <div style="display:grid;grid-template-columns:3fr 1fr 1fr 2.5fr auto;gap:6px;margin-bottom:4px;font-size:10px;color:var(--text-dim);padding:0 2px">
-        <span>名稱</span><span style="text-align:center">組數</span><span style="text-align:center">次數</span><span style="text-align:center">重量　單位</span><span></span>
+      <div style="display:grid;grid-template-columns:3fr 1fr 1fr 1.7fr 0.8fr auto;gap:6px;margin-bottom:4px;font-size:10px;color:var(--text-dim);padding:0 2px">
+        <span>名稱</span><span style="text-align:center">組數</span><span style="text-align:center">次數</span><span style="text-align:center">重量</span><span style="text-align:center">單位</span><span></span>
       </div>
       ${setsHtml}
     </div>`;
