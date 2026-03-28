@@ -950,6 +950,8 @@ function showApp() {
   loadApiKey();
   loadSavedDietPlan();
   renderFoodLibrary();
+  // Restore any unsaved draft (iOS Safari fix)
+  setTimeout(restoreDraftFromLocal, 500);
 }
 
 function showAuthScreen() {
@@ -1435,12 +1437,15 @@ async function saveWorkout() {
       const unit   = row.querySelector('.sr-unit')?.value || 'kg';
       const weight = unit === 'lb' ? Math.round(rawW * 0.4536 * 10) / 10 : rawW;
       const displayW = unit === 'lb' ? `${rawW}磅(${weight}kg)` : `${weight}`;
-      if (nSets > 0 && (weight > 0 || nReps > 0)) {
+      // Allow saving even with weight=0 (bodyweight exercises)
+      if (nSets > 0 && nReps > 0) {
         for (let i = 0; i < nSets; i++) sets.push({ label, weight, reps: nReps, unit, displayW });
       }
     });
-    if (sets.length) exercises.push({ name, sets });
+    exercises.push({ name, sets: sets.length ? sets : [{ label: '記錄', weight: 0, reps: 0, unit: 'kg', displayW: '0' }] });
   });
+
+  if (exercises.length === 0) { alert('請至少輸入一個動作名稱'); return; }
 
   const cardioType = document.getElementById('cardio-type')?.value || '';
   const cardioDuration = parseInt(document.getElementById('cardio-duration')?.value) || 0;
@@ -1467,13 +1472,30 @@ async function saveWorkout() {
     return;
   }
 
-  const { error } = await db.from('workout_records').insert(workoutEntry);
+  // Remove user_id from insert data (Supabase RLS handles it)
+  const insertData = {
+    recorded_date: workoutEntry.recorded_date,
+    day_label: workoutEntry.day_label,
+    day_index: workoutEntry.day_index,
+    exercises: workoutEntry.exercises,
+    cardio: workoutEntry.cardio,
+    user_id: currentUser.id
+  };
+
+  const { error } = await db.from('workout_records').insert(insertData);
   if (!error) {
     setSyncStatus('synced', '✓ 訓練記錄已同步');
     renderWorkoutHistory();
+    // Clear cardio fields after save
+    ['cardio-type','cardio-duration','cardio-calories'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
     alert('✅ 訓練記錄已儲存！');
   } else {
-    setSyncStatus('error', '✗ 儲存失敗');
+    console.error('Workout save error:', error);
+    setSyncStatus('error', '✗ 儲存失敗：' + (error.message || JSON.stringify(error)));
+    alert('儲存失敗：' + (error.message || error.code || '請檢查網路連線'));
   }
 }
 
@@ -1510,6 +1532,57 @@ async function renderWorkoutHistory() {
     </div>`).join('') + (records.length > 5 ? `<div style="text-align:center;padding:8px 0;font-size:12px;color:var(--text-dim)">還有 ${records.length - 5} 筆記錄，點「查看/篩選」查看全部</div>` : '');
 }
 
+
+
+// ════════════════════════════════════════════
+// iOS SAFARI FIX - Auto-save draft on page hide
+// ════════════════════════════════════════════
+function saveDraftToLocal() {
+  try {
+    const draft = {
+      bodyDate: document.getElementById('body-date')?.value,
+      bodyMorning: document.getElementById('body-morning')?.value,
+      bodyEvening: document.getElementById('body-evening')?.value,
+      bodyWaist: document.getElementById('body-waist')?.value,
+      bodyNote: document.getElementById('body-note')?.value,
+      nutritionDate: document.getElementById('nutrition-date')?.value,
+      workoutDate: document.getElementById('workout-date')?.value,
+      workoutDay: currentWorkoutDay,
+    };
+    localStorage.setItem('ht_draft', JSON.stringify(draft));
+  } catch(e) {}
+}
+
+function restoreDraftFromLocal() {
+  try {
+    const d = JSON.parse(localStorage.getItem('ht_draft') || '{}');
+    if (d.bodyDate) document.getElementById('body-date').value = d.bodyDate;
+    if (d.bodyMorning) document.getElementById('body-morning').value = d.bodyMorning;
+    if (d.bodyEvening) document.getElementById('body-evening').value = d.bodyEvening;
+    if (d.bodyWaist) document.getElementById('body-waist').value = d.bodyWaist;
+    if (d.bodyNote) document.getElementById('body-note').value = d.bodyNote;
+    if (d.nutritionDate) {
+      document.getElementById('nutrition-date').value = d.nutritionDate;
+      renderNutritionDay();
+    }
+    if (d.workoutDate) document.getElementById('workout-date').value = d.workoutDate;
+  } catch(e) {}
+}
+
+// Save draft when user leaves page (iOS Safari background)
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    saveDraftToLocal();
+  }
+});
+
+// Also save on pagehide (more reliable on iOS)
+window.addEventListener('pagehide', saveDraftToLocal);
+
+// Auto-save draft every 10 seconds while on page
+setInterval(() => {
+  if (currentUser) saveDraftToLocal();
+}, 10000);
 
 // ════════════════════════════════════════════
 // COMPACT SETS DISPLAY
