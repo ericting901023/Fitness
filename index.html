@@ -365,7 +365,7 @@
   }
   .modal-box {
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: 16px; padding: 24px; width: 100%; max-width: 480px;
+    border-radius: 16px; padding: 24px; width: 100%; max-width: 720px;
     max-height: 80vh; overflow-y: auto;
   }
   .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
@@ -1422,7 +1422,7 @@ function addExerciseInput(name = '', prefillSets = []) {
       <input type="text" placeholder="動作名稱" value="${name}" style="flex:1;font-size:14px;font-weight:600" class="ex-name">
       <button class="btn btn-danger btn-sm" onclick="document.getElementById('${id}').remove()" style="padding:5px 10px">✕</button>
     </div>
-    <div style="display:grid;grid-template-columns:3fr 1fr 1fr 1.7fr 0.8fr auto;gap:6px;margin-bottom:4px;font-size:10px;color:var(--text-dim);padding:0 2px">
+    <div style="display:grid;grid-template-columns:1fr 55px 55px 90px 60px 36px;gap:6px;margin-bottom:4px;font-size:10px;color:var(--text-dim);padding:0 2px">
       <span>名稱</span><span style="text-align:center">組數</span><span style="text-align:center">次數</span><span style="text-align:center">重量</span><span style="text-align:center">單位</span><span></span>
     </div>
     <div class="sets-container">
@@ -1434,7 +1434,7 @@ function addExerciseInput(name = '', prefillSets = []) {
 }
 
 function buildSetRowHTML(exId, label='', sets='', reps='', weight='', unit='kg') {
-  return `<div class="set-row" style="display:grid;grid-template-columns:3fr 1fr 1fr 1.7fr 0.8fr auto;gap:6px;margin-bottom:6px;align-items:center">
+  return `<div class="set-row" style="display:grid;grid-template-columns:1fr 55px 55px 90px 60px 36px;gap:6px;margin-bottom:6px;align-items:center">
     <input type="text" class="sr-label" placeholder="熱身/正式組" value="${label}" style="font-size:12px;padding:7px 8px">
     <input type="number" class="sr-sets" placeholder="組" value="${sets}" min="1" max="20" style="font-size:13px;text-align:center;padding:7px 4px">
     <input type="number" class="sr-reps" placeholder="次" value="${reps}" min="1" max="100" style="font-size:13px;text-align:center;padding:7px 4px">
@@ -1674,7 +1674,7 @@ function addEwSetRow() {
   if (!exercises.length) return;
   const lastEx = exercises[exercises.length - 1];
   const container = lastEx.querySelector('.ew-sets-container') || lastEx;
-  const newRow = `<div style="display:grid;grid-template-columns:3fr 1fr 1fr 1.7fr 0.8fr auto;gap:6px;margin-bottom:5px;align-items:center" class="ew-set">
+  const newRow = `<div style="display:grid;grid-template-columns:1fr 55px 55px 90px 60px 36px;gap:6px;margin-bottom:5px;align-items:center" class="ew-set">
     <input type="text" class="ew-label" value="正式組" placeholder="熱身/正式組" style="font-size:12px">
     <input type="number" class="ew-sets-n" value="1" min="1" placeholder="組" style="font-size:12px;text-align:center">
     <input type="number" class="ew-reps" value="" placeholder="次" style="font-size:12px;text-align:center">
@@ -1760,7 +1760,7 @@ async function editWorkoutRecord(id) {
       groups[key].count++;
     });
     const setsHtml = Object.values(groups).map(g =>
-      `<div style="display:grid;grid-template-columns:3fr 1fr 1fr 1.7fr 0.8fr auto;gap:6px;margin-bottom:5px;align-items:center" class="ew-set">
+      `<div style="display:grid;grid-template-columns:1fr 55px 55px 90px 60px 36px;gap:6px;margin-bottom:5px;align-items:center" class="ew-set">
         <input type="text" class="ew-label" value="${g.label}" placeholder="熱身/正式組" style="font-size:12px">
         <input type="number" class="ew-sets-n" value="${g.count}" min="1" placeholder="組" style="font-size:12px;text-align:center">
         <input type="number" class="ew-reps" value="${g.reps}" placeholder="次" style="font-size:12px;text-align:center">
@@ -1779,17 +1779,17 @@ async function editWorkoutRecord(id) {
         <input type="text" class="ew-name" value="${ex.name}" style="flex:1;font-size:14px;font-weight:600">
         <button class="btn btn-danger btn-sm" onclick="document.getElementById('ew-ex-${ei}').remove()" style="padding:4px 8px">✕</button>
       </div>
-      <div style="display:grid;grid-template-columns:3fr 1fr 1fr 1.7fr 0.8fr auto;gap:6px;margin-bottom:4px;font-size:10px;color:var(--text-dim);padding:0 2px">
+      <div style="display:grid;grid-template-columns:1fr 55px 55px 90px 60px 36px;gap:6px;margin-bottom:4px;font-size:10px;color:var(--text-dim);padding:0 2px">
         <span>名稱</span><span style="text-align:center">組數</span><span style="text-align:center">次數</span><span style="text-align:center">重量</span><span style="text-align:center">單位</span><span></span>
       </div>
       ${setsHtml}
+      <button class="btn btn-secondary btn-sm" style="margin-top:6px;font-size:11px" onclick="addEwSetRowToBlock(this)">＋ 新增一行</button>
     </div>`;
   }).join('');
 
   openModal('編輯訓練記錄 — ' + record.recorded_date, `
     <div style="font-size:12px;color:var(--text-dim);margin-bottom:12px">${record.day_label}</div>
     <div id="ew-exercises">${exHtml}</div>
-    <button class="btn btn-secondary btn-sm" style="margin-top:8px;font-size:11px" onclick="addEwSetRow()">＋ 新增一行</button>
   `, async () => {
     const exercises = [];
     document.querySelectorAll('[id^="ew-ex-"]').forEach(block => {
