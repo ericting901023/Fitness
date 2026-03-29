@@ -280,7 +280,7 @@
   .total-fat .total-num { color: #f472b6; }
 
   /* ── WORKOUT ── */
-  .workout-day-selector { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 16px; }
+  .workout-day-selector { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 16px; }
   .day-btn {
     padding: 8px 4px; background: var(--surface2); border: 1px solid var(--border);
     border-radius: 8px; color: var(--text-dim); font-size: 11px; cursor: pointer;
@@ -333,7 +333,6 @@
   #loading-screen .spinner { width: 36px; height: 36px; border-width: 3px; border-top-color: var(--accent); }
   #loading-screen p { font-size: 13px; color: var(--text-dim); }
 
-
   /* ── CHARTS ── */
   .chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
   .chart-title { font-size: 13px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px; }
@@ -355,7 +354,6 @@
   .key-input-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
   .key-input-row input { flex: 1; font-family: 'Space Mono', monospace; font-size: 12px; }
   .key-saved { font-size: 11px; color: var(--success); }
-
 
   /* ── EDIT MODAL ── */
   .modal-backdrop {
@@ -385,78 +383,100 @@
   .btn-edit:hover { background: rgba(56,189,248,0.2); }
   .action-btns { display: flex; gap: 6px; }
 
-
-
-
-  /* ── SET ROW GRID ── */
-  .set-row, .ew-set {
+  /* ════════════════════════════════════════════
+     SET ROW GRID — 統一桌機與手機版
+     欄位：名稱 | 組數 | 次數 | 重量 | 單位 | 刪除
+     桌機：固定像素；手機：縮小但不改變結構
+  ════════════════════════════════════════════ */
+  .set-row-header,
+  .set-row,
+  .ew-set-header,
+  .ew-set {
     display: grid;
-    grid-template-columns: 150px 56px 56px 90px 62px 32px;
-    gap: 6px;
+    gap: 4px;
     align-items: center;
     margin-bottom: 6px;
+    /* 桌機 6 欄 */
+    grid-template-columns: minmax(80px, 1fr) 48px 48px 72px 52px 32px;
   }
-  .set-row-header {
-    display: grid;
-    grid-template-columns: 150px 56px 56px 90px 62px 32px;
-    gap: 6px;
-    margin-bottom: 4px;
+  .set-row-header,
+  .ew-set-header {
     font-size: 10px;
     color: var(--text-dim);
     padding: 0 2px;
+    margin-bottom: 4px;
+    align-items: center;
   }
-  .set-row input, .ew-set input {
+  /* 所有欄位輸入統一樣式 */
+  .set-row input,
+  .ew-set input {
     width: 100%;
     min-width: 0;
-    box-sizing: border-box;
     padding: 8px 4px;
     font-size: 13px;
     text-align: center;
   }
-  .set-row input.sr-label, .ew-set input.ew-label {
+  .set-row input.sr-label,
+  .ew-set input.ew-label {
     text-align: left;
-    padding: 8px 8px;
-    font-size: 13px;
+    padding: 8px 6px;
+    font-size: 12px;
   }
-  .set-row select, .ew-set select {
+  .set-row select,
+  .ew-set select {
     width: 100%;
     min-width: 0;
-    box-sizing: border-box;
-    font-size: 12px;
     padding: 8px 2px;
+    font-size: 11px;
     text-align: center;
   }
-  .set-row .btn-danger, .ew-set .btn-danger {
+  /* 刪除按鈕固定 32px */
+  .set-row .btn-del,
+  .ew-set .btn-del {
     width: 32px;
     height: 32px;
     min-width: 32px;
     padding: 0;
+    display: flex;
+    align-items: center;
     justify-content: center;
     font-size: 13px;
+    border-radius: 6px;
+    border: 1px solid rgba(248,113,113,0.3);
+    background: rgba(248,113,113,0.15);
+    color: var(--danger);
+    cursor: pointer;
   }
-  @media (max-width: 520px) {
-    .set-row, .ew-set {
-      grid-template-columns: 1fr 44px 44px 72px 50px;
-      gap: 4px;
-      position: relative;
-      padding-right: 36px;
+  .set-row .btn-del:hover,
+  .ew-set .btn-del:hover { background: rgba(248,113,113,0.25); }
+
+  /* 手機：直立 (< 480px) — 縮小欄寬，維持 6 欄結構 */
+  @media (max-width: 479px) {
+    .set-row-header,
+    .set-row,
+    .ew-set-header,
+    .ew-set {
+      grid-template-columns: minmax(60px, 1fr) 38px 38px 58px 42px 28px;
+      gap: 3px;
     }
-    .set-row-header {
-      grid-template-columns: 1fr 44px 44px 72px 50px;
+    .set-row input,
+    .ew-set input { font-size: 12px; padding: 7px 2px; }
+    .set-row input.sr-label,
+    .ew-set input.ew-label { font-size: 11px; padding: 7px 4px; }
+    .set-row select,
+    .ew-set select { font-size: 10px; padding: 7px 1px; }
+    .set-row .btn-del,
+    .ew-set .btn-del { width: 28px; height: 28px; min-width: 28px; font-size: 11px; }
+  }
+
+  /* 手機橫向 / 平板 (480-767px) — 稍寬 */
+  @media (min-width: 480px) and (max-width: 767px) {
+    .set-row-header,
+    .set-row,
+    .ew-set-header,
+    .ew-set {
+      grid-template-columns: minmax(80px, 1fr) 44px 44px 68px 48px 32px;
       gap: 4px;
-      padding-right: 36px;
-    }
-    .set-row input, .ew-set input { font-size: 12px; padding: 7px 3px; }
-    .set-row input.sr-label, .ew-set input.ew-label { font-size: 11px; padding: 7px 4px; }
-    .set-row select, .ew-set select { font-size: 10px; padding: 7px 1px; }
-    .set-row .btn-danger, .ew-set .btn-danger {
-      position: absolute;
-      right: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 30px;
-      height: 30px;
-      min-width: 30px;
     }
   }
 
@@ -515,7 +535,7 @@
   .food-lib-btn:hover { border-color: var(--accent2); background: rgba(56,189,248,0.1); }
   .food-lib-btn .del-lib { margin-left: 4px; color: var(--danger); font-size: 10px; }
 
-  /* ── AI DIET PLAN SECTION (same page as nutrition) ── */
+  /* ── AI DIET PLAN SECTION ── */
   .ai-plan-card { background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.08)); border: 1px solid rgba(99,102,241,0.3); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
   .ai-plan-title { font-size: 15px; font-weight: 700; color: #a78bfa; margin-bottom: 12px; }
   .ai-plan-text { font-size: 13px; line-height: 1.8; white-space: pre-wrap; color: var(--text); }
@@ -527,14 +547,23 @@
   .query-status { font-size: 12px; color: var(--accent2); padding: 6px 0; display: none; }
   .query-status.visible { display: block; }
 
+  /* ── RESPONSIVE OVERRIDES ── */
   @media(max-width: 600px) {
     .nutrient-grid { grid-template-columns: repeat(2,1fr); }
+    .nutrition-totals { grid-template-columns: repeat(2, 1fr); }
   }
-
   @media(max-width: 480px) {
     .stat-grid { grid-template-columns: repeat(2, 1fr); }
-    .nutrition-totals { grid-template-columns: repeat(2, 1fr); }
+    /* workout day selector: 2 cols on very small screens */
+    .workout-day-selector { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media(min-width: 481px) {
+    /* 4 cols on medium phones and up */
     .workout-day-selector { grid-template-columns: repeat(4, 1fr); }
+  }
+  @media(min-width: 640px) {
+    /* 7 cols on tablet/desktop */
+    .workout-day-selector { grid-template-columns: repeat(7, 1fr); }
   }
 </style>
 </head>
@@ -624,7 +653,7 @@
         <div class="form-group" style="flex:1"><label>查看日期</label><input type="date" id="nutrition-date" onchange="renderNutritionDay()"></div>
       </div>
 
-      <!-- Nutrient Targets (set by AI, shows current vs target vs remaining) -->
+      <!-- Nutrient Targets -->
       <div class="nutrient-grid">
         <div class="nutrient-box">
           <div class="nutrient-box-label">🔥 熱量 kcal</div>
@@ -656,7 +685,7 @@
         </div>
       </div>
 
-      <!-- AI Diet Plan (shown after AI analysis) -->
+      <!-- AI Diet Plan -->
       <div class="ai-plan-card" id="ai-diet-plan-card" style="display:none">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div class="ai-plan-title">🤖 AI 飲食建議</div>
@@ -795,7 +824,6 @@
       </div>
     </div>
 
-
     <!-- TAB: CHARTS -->
     <div id="panel-charts" class="panel">
       <div class="section-title">趨勢圖表</div>
@@ -824,7 +852,7 @@
       <div class="section-title">AI 營養師</div>
       <div class="section-desc">結合你的體重、訓練、飲食趨勢，給出個人化每日飲食計畫</div>
 
-      <!-- API Key (collapsible) -->
+      <!-- API Key -->
       <div class="card" id="api-key-card">
         <div class="card-header" style="cursor:pointer;margin-bottom:0" onclick="toggleApiKeyCard()">
           <div class="card-title">API Key 設定</div>
@@ -839,7 +867,7 @@
         </div>
       </div>
 
-      <!-- InBody Upload (optional) -->
+      <!-- InBody Upload -->
       <div class="card">
         <div class="card-header">
           <div class="card-title">InBody 報告（選填，可多張）</div>
@@ -850,7 +878,7 @@
         <input type="file" id="inbody-input" accept="image/*" multiple style="display:none" onchange="handleInbodyUpload(this)">
       </div>
 
-      <!-- Profile (compact) -->
+      <!-- Profile -->
       <div class="card">
         <div class="card-header"><div class="card-title">基本資料</div></div>
         <div class="form-row">
@@ -896,7 +924,6 @@
         <span style="font-size:11px;color:var(--text-dim);margin-left:8px">點擊後飲食頁會顯示目標攝取量與進度條</span>
       </div>
 
-      <!-- AI loading (now inline in chat) -->
       <div class="ai-loading" id="ai-loading" style="display:none"><div class="spinner"></div><span>AI 分析中...</span></div>
     </div>
 
@@ -909,7 +936,6 @@
         <div class="modal-title" style="margin-bottom:0">訓練記錄查看</div>
         <button class="btn btn-secondary btn-sm" onclick="document.getElementById('workout-modal').style.display='none'">關閉</button>
       </div>
-      <!-- Day filter tabs -->
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">
         <button class="chart-tab active" onclick="filterWorkoutDay('all', this)" style="font-size:11px">全部</button>
         <button class="chart-tab" onclick="filterWorkoutDay('胸肌＋三頭肌', this)" style="font-size:11px">胸＋三頭</button>
@@ -942,7 +968,7 @@
 
 <script>
 // ════════════════════════════════════════════
-// CONFIG — 請填入你的 Supabase 設定
+// CONFIG
 // ════════════════════════════════════════════
 const SUPABASE_URL = 'https://asdkiiwyyfoqhkvvrhab.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzZGtpaXd5eWZvcWhrdnZyaGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MTIzMTYsImV4cCI6MjA4OTk4ODMxNn0.KMINV5NVCvGehwQI7vqezyAYRy9gWwCNWczTXMskm_c';
@@ -1003,7 +1029,6 @@ function showApp() {
   document.getElementById('app').style.display = 'block';
   document.getElementById('sync-bar').style.display = 'block';
 
-  // Set avatar
   const avatar = document.getElementById('user-avatar');
   const meta = currentUser.user_metadata;
   if (meta?.avatar_url) {
@@ -1012,7 +1037,6 @@ function showApp() {
     avatar.textContent = (meta?.name || meta?.email || 'U')[0].toUpperCase();
   }
 
-  // Init
   document.getElementById('body-date').value = today();
   document.getElementById('nutrition-date').value = today();
   document.getElementById('workout-date').value = today();
@@ -1023,7 +1047,6 @@ function showApp() {
   loadApiKey();
   loadSavedDietPlan();
   renderFoodLibrary();
-  // Restore any unsaved draft (iOS Safari fix)
   setTimeout(restoreDraftFromLocal, 500);
 }
 
@@ -1043,7 +1066,7 @@ function showUserMenu() {
 }
 
 // ════════════════════════════════════════════
-// SYNC HELPERS (Supabase or localStorage fallback)
+// SYNC HELPERS
 // ════════════════════════════════════════════
 function setSyncStatus(status, msg) {
   const bar = document.getElementById('sync-bar');
@@ -1051,7 +1074,6 @@ function setSyncStatus(status, msg) {
   bar.textContent = msg;
 }
 
-// ── localStorage helpers ──
 function lsKey(table) { return 'ht_' + table; }
 function lsLoad(table) { try { return JSON.parse(localStorage.getItem(lsKey(table))) || []; } catch { return []; } }
 function lsSave(table, data) { localStorage.setItem(lsKey(table), JSON.stringify(data)); }
@@ -1155,7 +1177,6 @@ async function renderBodyHistory() {
 
   if (!records.length) {
     container.innerHTML = '<div class="empty-state"><div class="empty-icon">⚖️</div>尚無體態記錄</div>';
-    renderMiniBodyCharts(records);
     return;
   }
 
@@ -1175,10 +1196,6 @@ async function renderBodyHistory() {
         <button class="btn btn-danger btn-sm" onclick="deleteBody('${r.recorded_date}')">刪除</button>
       </div>
     </div>`).join('');
-}
-
-function renderMiniBodyCharts(records) {
-  // Mini charts removed from body panel (use Charts tab for trends)
 }
 
 async function deleteBody(date) {
@@ -1273,7 +1290,6 @@ function clearFoodForm() {
   s.style.color = 'var(--accent2)';
 }
 
-// ── Food Library ──
 function renderFoodLibrary() {
   const lib = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
   const el = document.getElementById('food-library-btns');
@@ -1337,7 +1353,6 @@ async function renderNutritionDay() {
     carb: acc.carb + (r.carb||0), fat: acc.fat + (r.fat||0)
   }), { cal:0, protein:0, carb:0, fat:0 });
 
-  // Update new nutrient targets UI
   updateNutrientBoxes(totals);
 
   const container = document.getElementById('food-list-container');
@@ -1445,7 +1460,6 @@ async function selectWorkoutDay(day, el) {
     return;
   }
 
-  // Load last record for this day type to prefill weights
   let lastRecord = null;
   try {
     const allRecords = await dbSelect('workout_records', 'recorded_date', false);
@@ -1457,7 +1471,6 @@ async function selectWorkoutDay(day, el) {
     if (lastRecord) {
       const lastEx = (lastRecord.exercises || []).find(e => e.name === exName);
       if (lastEx && lastEx.sets && lastEx.sets.length > 0) {
-        // Group sets back into rows (label+weight+reps)
         const groups = {};
         lastEx.sets.forEach(s => {
           const key = (s.label||'') + '|' + s.weight + '|' + s.reps;
@@ -1481,48 +1494,54 @@ async function selectWorkoutDay(day, el) {
 function addExerciseInput(name = '', prefillSets = []) {
   if (currentWorkoutDay === 4) return;
   const container = document.getElementById('exercise-inputs');
-  const id = 'ex-' + Date.now() + '-' + exerciseCount++;
+  const id = 'ex-' + Date.now() + '-' + (exerciseCount++);
   const div = document.createElement('div');
   div.className = 'exercise-block';
   div.id = id;
-  // Default warmup + working sets rows
   const defaultRows = prefillSets.length ? prefillSets : [
-    { label: '熱身', sets: 1, reps: 10, weight: '' },
-    { label: '正式組', sets: 4, reps: 10, weight: '' },
+    { label: '熱身', sets: 1, reps: 10, weight: '', unit: 'kg' },
+    { label: '正式組', sets: 4, reps: 10, weight: '', unit: 'kg' },
   ];
   div.innerHTML = `
     <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
       <input type="text" placeholder="動作名稱" value="${name}" style="flex:1;font-size:14px;font-weight:600" class="ex-name">
-      <button class="btn btn-danger btn-sm" onclick="document.getElementById('${id}').remove()" style="padding:5px 10px">✕</button>
+      <button class="btn btn-danger btn-sm" onclick="document.getElementById('${id}').remove()" style="padding:5px 10px;flex-shrink:0">✕</button>
     </div>
     <div class="set-row-header">
-      <span>名稱</span><span style="text-align:center">組數</span><span style="text-align:center">次數</span><span style="text-align:center">重量</span><span style="text-align:center">單位</span><span></span>
+      <span>名稱</span>
+      <span style="text-align:center">組</span>
+      <span style="text-align:center">次</span>
+      <span style="text-align:center">重量</span>
+      <span style="text-align:center">單位</span>
+      <span></span>
     </div>
     <div class="sets-container">
-      ${defaultRows.map((r,i) => buildSetRowHTML(id, r.label, r.sets, r.reps, r.weight)).join('')}
+      ${defaultRows.map(r => buildSetRowHTML(r.label, r.sets, r.reps, r.weight, r.unit||'kg')).join('')}
     </div>
     <button class="btn btn-secondary btn-sm" style="margin-top:6px;font-size:11px" onclick="addSetRow('${id}')">＋ 新增一行</button>
   `;
   container.appendChild(div);
 }
 
-function buildSetRowHTML(exId, label='', sets='', reps='', weight='', unit='kg') {
+// ── 修正：buildSetRowHTML 不傳 exId，用 closest('.exercise-block') 避免 DOM 問題 ──
+function buildSetRowHTML(label='', sets='', reps='', weight='', unit='kg') {
   return `<div class="set-row">
-    <input type="text" class="sr-label" placeholder="熱身/正式組" value="${label}" style="font-size:12px">
-    <input type="number" class="sr-sets" placeholder="組" value="${sets}" min="1" max="20" style="font-size:13px;text-align:center">
-    <input type="number" class="sr-reps" placeholder="次" value="${reps}" min="1" max="100" style="font-size:13px;text-align:center">
-    <input type="number" class="sr-weight" placeholder="重量" value="${weight}" step="0.5" style="font-size:13px;text-align:center">
+    <input type="text" class="sr-label" placeholder="熱身/正式組" value="${label}">
+    <input type="number" class="sr-sets" placeholder="組" value="${sets}" min="1" max="20">
+    <input type="number" class="sr-reps" placeholder="次" value="${reps}" min="1" max="100">
+    <input type="number" class="sr-weight" placeholder="重量" value="${weight}" step="0.5">
     <select class="sr-unit">
       <option value="kg" ${unit==='kg'?'selected':''}>kg</option>
       <option value="lb" ${unit==='lb'?'selected':''}>磅</option>
     </select>
-    <button class="btn btn-danger btn-sm" onclick="this.closest('.set-row').remove()" style="padding:0;width:34px;height:34px;justify-content:center">✕</button>
+    <button class="btn-del" onclick="this.closest('.set-row').remove()" type="button">✕</button>
   </div>`;
 }
 
 function addSetRow(exId) {
   const container = document.getElementById(exId).querySelector('.sets-container');
-  container.insertAdjacentHTML('beforeend', buildSetRowHTML(exId, '正式組'));
+  if (!container) return;
+  container.insertAdjacentHTML('beforeend', buildSetRowHTML('正式組', 1, 10, '', 'kg'));
 }
 
 async function saveWorkout() {
@@ -1530,21 +1549,23 @@ async function saveWorkout() {
   if (!date) { alert('請選擇日期'); return; }
   const dayInfo = WORKOUT_DAYS[currentWorkoutDay];
   const exercises = [];
+
   document.querySelectorAll('.exercise-block').forEach(block => {
-    const name = block.querySelector('.ex-name').value.trim();
+    const name = block.querySelector('.ex-name') ? block.querySelector('.ex-name').value.trim() : '';
     if (!name) return;
     const sets = [];
     block.querySelectorAll('.set-row').forEach(row => {
-      const label  = (row.querySelector('.sr-label')?.value || '').trim();
-      const nSets  = parseInt(row.querySelector('.sr-sets')?.value) || 1;
-      const nReps  = parseInt(row.querySelector('.sr-reps')?.value) || 0;
-      const rawW   = parseFloat(row.querySelector('.sr-weight')?.value) || 0;
-      const unit   = row.querySelector('.sr-unit')?.value || 'kg';
+      const label  = row.querySelector('.sr-label') ? row.querySelector('.sr-label').value.trim() : '';
+      const nSets  = parseInt(row.querySelector('.sr-sets') ? row.querySelector('.sr-sets').value : '0') || 1;
+      const nReps  = parseInt(row.querySelector('.sr-reps') ? row.querySelector('.sr-reps').value : '0') || 0;
+      const rawW   = parseFloat(row.querySelector('.sr-weight') ? row.querySelector('.sr-weight').value : '0') || 0;
+      const unit   = row.querySelector('.sr-unit') ? row.querySelector('.sr-unit').value : 'kg';
       const weight = unit === 'lb' ? Math.round(rawW * 0.4536 * 10) / 10 : rawW;
       const displayW = unit === 'lb' ? `${rawW}磅(${weight}kg)` : `${weight}`;
-      // Allow saving even with weight=0 (bodyweight exercises)
       if (nSets > 0 && nReps > 0) {
-        for (let i = 0; i < nSets; i++) sets.push({ label, weight, reps: nReps, unit, displayW });
+        for (let i = 0; i < nSets; i++) {
+          sets.push({ label, weight, reps: nReps, unit, displayW });
+        }
       }
     });
     exercises.push({ name, sets: sets.length ? sets : [{ label: '記錄', weight: 0, reps: 0, unit: 'kg', displayW: '0' }] });
@@ -1552,9 +1573,9 @@ async function saveWorkout() {
 
   if (exercises.length === 0) { alert('請至少輸入一個動作名稱'); return; }
 
-  const cardioType = document.getElementById('cardio-type')?.value || '';
-  const cardioDuration = parseInt(document.getElementById('cardio-duration')?.value) || 0;
-  const cardioCalories = parseInt(document.getElementById('cardio-calories')?.value) || 0;
+  const cardioType = document.getElementById('cardio-type') ? document.getElementById('cardio-type').value : '';
+  const cardioDuration = parseInt(document.getElementById('cardio-duration') ? document.getElementById('cardio-duration').value : '0') || 0;
+  const cardioCalories = parseInt(document.getElementById('cardio-calories') ? document.getElementById('cardio-calories').value : '0') || 0;
   const cardio = cardioType ? { type: cardioType, duration: cardioDuration, calories: cardioCalories } : null;
 
   const workoutEntry = {
@@ -1577,7 +1598,6 @@ async function saveWorkout() {
     return;
   }
 
-  // Remove user_id from insert data (Supabase RLS handles it)
   const insertData = {
     recorded_date: workoutEntry.recorded_date,
     day_label: workoutEntry.day_label,
@@ -1591,7 +1611,6 @@ async function saveWorkout() {
   if (!error) {
     setSyncStatus('synced', '✓ 訓練記錄已同步');
     renderWorkoutHistory();
-    // Clear cardio fields after save
     ['cardio-type','cardio-duration','cardio-calories'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
@@ -1615,7 +1634,6 @@ async function renderWorkoutHistory() {
     return;
   }
   renderMiniWorkoutChart(records);
-  // Show only last 5 in inline view (collapsed by default)
   container.innerHTML = records.slice(0, 5).map(r => `
     <div class="exercise-block" style="margin-bottom:8px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -1637,14 +1655,11 @@ async function renderWorkoutHistory() {
     </div>`).join('') + (records.length > 5 ? `<div style="text-align:center;padding:8px 0;font-size:12px;color:var(--text-dim)">還有 ${records.length - 5} 筆記錄，點「查看/篩選」查看全部</div>` : '');
 }
 
-
-
 // ════════════════════════════════════════════
-// iOS SAFARI FIX - Auto-save draft on page hide
+// iOS SAFARI FIX
 // ════════════════════════════════════════════
 function saveDraftToLocal() {
   try {
-    // Save workout exercise inputs
     const workoutExercises = [];
     document.querySelectorAll('.exercise-block').forEach(block => {
       const name = block.querySelector('.ex-name')?.value || '';
@@ -1693,10 +1708,8 @@ function restoreDraftFromLocal() {
     }
     if (d.workoutDate) document.getElementById('workout-date').value = d.workoutDate;
 
-    // Restore workout exercises if same day
     if (d.workoutExercises && d.workoutExercises.length && d.workoutDay === currentWorkoutDay) {
       const container = document.getElementById('exercise-inputs');
-      // Only restore if user hasn't already filled in weights
       const hasWeights = Array.from(container.querySelectorAll('.sr-weight')).some(el => el.value);
       if (!hasWeights) {
         exerciseCount = 0;
@@ -1708,7 +1721,6 @@ function restoreDraftFromLocal() {
           }));
           addExerciseInput(ex.name, prefillSets);
         });
-        // Also restore cardio
         if (d.cardioType) document.getElementById('cardio-type').value = d.cardioType;
         if (d.cardioDuration) document.getElementById('cardio-duration').value = d.cardioDuration;
         if (d.cardioCalories) document.getElementById('cardio-calories').value = d.cardioCalories;
@@ -1717,20 +1729,11 @@ function restoreDraftFromLocal() {
   } catch(e) {}
 }
 
-// Save draft when user leaves page (iOS Safari background)
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') {
-    saveDraftToLocal();
-  }
+  if (document.visibilityState === 'hidden') saveDraftToLocal();
 });
-
-// Also save on pagehide (more reliable on iOS)
 window.addEventListener('pagehide', saveDraftToLocal);
-
-// Auto-save draft every 10 seconds while on page
-setInterval(() => {
-  if (currentUser) saveDraftToLocal();
-}, 10000);
+setInterval(() => { if (currentUser) saveDraftToLocal(); }, 10000);
 
 // ════════════════════════════════════════════
 // COMPACT SETS DISPLAY
@@ -1783,30 +1786,6 @@ function editBodyRecord(date, morning, evening, waist, note) {
   });
 }
 
-
-function addEwSetRow() {
-  // Add a new set row to the last exercise block in edit modal
-  const exercises = document.querySelectorAll('#ew-exercises [id^="ew-ex-"]');
-  if (!exercises.length) return;
-  const lastEx = exercises[exercises.length - 1];
-  const container = lastEx.querySelector('.ew-sets-container') || lastEx;
-  const newRow = `<div class="ew-set">
-    <input type="text" class="ew-label" value="正式組" placeholder="熱身/正式組" style="font-size:12px">
-    <input type="number" class="ew-sets-n" value="1" min="1" placeholder="組" style="font-size:12px;text-align:center">
-    <input type="number" class="ew-reps" value="" placeholder="次" style="font-size:12px;text-align:center">
-    <input type="number" class="ew-weight" value="" placeholder="重量" step="0.5" style="font-size:12px;text-align:center">
-    <select class="ew-unit" style="font-size:11px;padding:6px 2px;text-align:center">
-      <option value="kg">kg</option>
-      <option value="lb">磅</option>
-    </select>
-    <button class="btn btn-danger btn-sm" onclick="this.closest('.ew-set').remove()" style="padding:0;width:34px;height:34px;justify-content:center">✕</button>
-  </div>`;
-  // Insert before the add button
-  const addBtn = document.querySelector('#modal-body button.btn-secondary');
-  if (addBtn) addBtn.insertAdjacentHTML('beforebegin', newRow);
-  else container.insertAdjacentHTML('beforeend', newRow);
-}
-
 // ── Edit Food Record ──
 function editFoodRecord(id, name, grams, meal, cal, protein, carb, fat) {
   const ratio = grams / 100;
@@ -1841,7 +1820,6 @@ function editFoodRecord(id, name, grams, meal, cal, protein, carb, fat) {
     const newF = Math.round((parseFloat(document.getElementById('ef-fat').value)||0) * r2 * 10) / 10;
     const newMeal = document.getElementById('ef-meal').value;
     if (!SUPABASE_CONFIGURED) {
-      const date = document.getElementById('nutrition-date').value || today();
       let rows = lsLoad('nutrition_records');
       const idx = rows.findIndex(r => r.id == id);
       if (idx >= 0) rows[idx] = { ...rows[idx], food_name: newName, grams: newGrams, meal: newMeal, cal: newCal, protein: newP, carb: newCb, fat: newF };
@@ -1859,6 +1837,32 @@ function editFoodRecord(id, name, grams, meal, cal, protein, carb, fat) {
 }
 
 // ── Edit Workout Record ──
+// ════════════════════════════════════════════
+// 修正：ew-set 移除多餘的包裝 div，weight 和 unit 直接在 grid 欄位中
+// ════════════════════════════════════════════
+function buildEwSetRowHTML(label='', count=1, reps=0, weight=0, unit='kg') {
+  return `<div class="ew-set">
+    <input type="text" class="ew-label" value="${label}" placeholder="熱身/正式組">
+    <input type="number" class="ew-sets-n" value="${count}" min="1" placeholder="組">
+    <input type="number" class="ew-reps" value="${reps}" placeholder="次">
+    <input type="number" class="ew-weight" value="${weight}" placeholder="重量" step="0.5">
+    <select class="ew-unit">
+      <option value="kg" ${unit==='kg'?'selected':''}>kg</option>
+      <option value="lb" ${unit==='lb'?'selected':''}>磅</option>
+    </select>
+    <button class="btn-del" onclick="this.closest('.ew-set').remove()" type="button">✕</button>
+  </div>`;
+}
+
+// ── 新增一行到指定 exercise block（點擊按鈕時用 this 找 container）──
+function addEwSetRowToBlock(btn) {
+  const exBlock = btn.closest('[id^="ew-ex-"]');
+  if (!exBlock) return;
+  const container = exBlock.querySelector('.ew-sets-container');
+  if (!container) return;
+  container.insertAdjacentHTML('beforeend', buildEwSetRowHTML('正式組', 1, 10, '', 'kg'));
+}
+
 async function editWorkoutRecord(id) {
   let record;
   if (!SUPABASE_CONFIGURED) {
@@ -1868,38 +1872,36 @@ async function editWorkoutRecord(id) {
     record = data;
   }
   if (!record) return;
+
   const exHtml = (record.exercises||[]).map((ex, ei) => {
+    // Compact sets into groups for editing
     const groups = {};
     (ex.sets||[]).forEach(s => {
       const key = (s.label||'') + '|' + s.weight + '|' + s.reps;
-      if (!groups[key]) groups[key] = { label: s.label||'', weight: s.weight, reps: s.reps, count: 0 };
+      if (!groups[key]) groups[key] = { label: s.label||'', weight: s.weight||0, reps: s.reps||0, count: 0, unit: s.unit||'kg' };
       groups[key].count++;
     });
     const setsHtml = Object.values(groups).map(g =>
-      `<div class="ew-set">
-        <input type="text" class="ew-label" value="${g.label}" placeholder="熱身/正式組" style="font-size:12px">
-        <input type="number" class="ew-sets-n" value="${g.count}" min="1" placeholder="組" style="font-size:12px;text-align:center">
-        <input type="number" class="ew-reps" value="${g.reps}" placeholder="次" style="font-size:12px;text-align:center">
-        <div style="display:flex;gap:3px;align-items:center">
-          <input type="number" class="ew-weight" value="${g.weight}" placeholder="重量" step="0.5" style="font-size:12px;text-align:center;width:100%">
-          <select class="ew-unit" style="font-size:11px;padding:6px 2px;width:50px;min-width:50px">
-            <option value="kg">kg</option>
-            <option value="lb">磅</option>
-          </select>
-        </div>
-        <button class="btn btn-danger btn-sm" onclick="this.closest('.ew-set').remove()" style="padding:0;width:34px;height:34px;justify-content:center">✕</button>
-      </div>`
+      buildEwSetRowHTML(g.label, g.count, g.reps, g.weight, g.unit)
     ).join('');
+
     return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px" id="ew-ex-${ei}">
       <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
         <input type="text" class="ew-name" value="${ex.name}" style="flex:1;font-size:14px;font-weight:600">
-        <button class="btn btn-danger btn-sm" onclick="document.getElementById('ew-ex-${ei}').remove()" style="padding:4px 8px">✕</button>
+        <button class="btn btn-danger btn-sm" onclick="document.getElementById('ew-ex-${ei}').remove()" style="padding:4px 8px;flex-shrink:0">✕</button>
       </div>
-      <div class="set-row-header">
-        <span>名稱</span><span style="text-align:center">組數</span><span style="text-align:center">次數</span><span style="text-align:center">重量</span><span style="text-align:center">單位</span><span></span>
+      <div class="ew-set-header">
+        <span>名稱</span>
+        <span style="text-align:center">組</span>
+        <span style="text-align:center">次</span>
+        <span style="text-align:center">重量</span>
+        <span style="text-align:center">單位</span>
+        <span></span>
       </div>
-      ${setsHtml}
-      <button class="btn btn-secondary btn-sm" style="margin-top:6px;font-size:11px" onclick="addEwSetRowToBlock(this)">＋ 新增一行</button>
+      <div class="ew-sets-container">
+        ${setsHtml}
+      </div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:6px;font-size:11px" onclick="addEwSetRowToBlock(this)" type="button">＋ 新增一行</button>
     </div>`;
   }).join('');
 
@@ -1909,20 +1911,25 @@ async function editWorkoutRecord(id) {
   `, async () => {
     const exercises = [];
     document.querySelectorAll('[id^="ew-ex-"]').forEach(block => {
-      const name = block.querySelector('.ew-name').value.trim();
+      const nameEl = block.querySelector('.ew-name');
+      const name = nameEl ? nameEl.value.trim() : '';
       if (!name) return;
       const sets = [];
       block.querySelectorAll('.ew-set').forEach(row => {
-        const lbl = (row.querySelector('.ew-label')?.value||'').trim();
-        const nSets = parseInt(row.querySelector('.ew-sets-n')?.value)||1;
-        const nReps = parseInt(row.querySelector('.ew-reps')?.value)||0;
-        const w = parseFloat(row.querySelector('.ew-weight')?.value)||0;
-        if (w > 0 || nReps > 0) {
-          for (let i = 0; i < nSets; i++) sets.push({ label: lbl, weight: w, reps: nReps });
+        const lbl    = row.querySelector('.ew-label')   ? row.querySelector('.ew-label').value.trim()   : '';
+        const nSets  = parseInt(row.querySelector('.ew-sets-n') ? row.querySelector('.ew-sets-n').value  : '1') || 1;
+        const nReps  = parseInt(row.querySelector('.ew-reps')   ? row.querySelector('.ew-reps').value    : '0') || 0;
+        const w      = parseFloat(row.querySelector('.ew-weight') ? row.querySelector('.ew-weight').value : '0') || 0;
+        const unit   = row.querySelector('.ew-unit')    ? row.querySelector('.ew-unit').value            : 'kg';
+        if (nReps > 0 || w > 0) {
+          for (let i = 0; i < nSets; i++) {
+            sets.push({ label: lbl, weight: w, reps: nReps, unit });
+          }
         }
       });
       exercises.push({ name, sets });
     });
+
     if (!SUPABASE_CONFIGURED) {
       let rows = lsLoad('workout_records');
       const idx = rows.findIndex(r => r.id == id);
@@ -1942,7 +1949,6 @@ async function editWorkoutRecord(id) {
     }
   });
 }
-
 
 // ════════════════════════════════════════════
 // WORKOUT HISTORY MODAL + TOGGLE
@@ -2032,7 +2038,7 @@ async function deleteWorkout(id) {
 // AI CHAT SYSTEM
 // ════════════════════════════════════════════
 let inbodyImages = [];
-let chatHistory = []; // stores {role, content} for multi-turn
+let chatHistory = [];
 
 function handleInbodyUpload(input) {
   const files = Array.from(input.files);
@@ -2109,13 +2115,11 @@ function removeTyping() {
 }
 
 async function buildDataContext() {
-  // Pull all user data to give AI full context
   const bodyRecs = await dbSelect('body_records', 'recorded_date', true);
   const workoutRecs = await dbSelect('workout_records', 'recorded_date', false);
   const recentBody = bodyRecs.slice(-30);
   const recentWorkout = workoutRecs.slice(0, 14);
 
-  // Get last 14 days nutrition
   const nutSummary = [];
   for (let i = 13; i >= 0; i--) {
     const d = new Date(); d.setDate(d.getDate() - i);
@@ -2177,10 +2181,7 @@ async function sendChatMessage() {
   appendChatMsg('user', text);
   showTyping();
 
-  // Build messages array
   const dataCtx = await buildDataContext();
-
-  // System prompt
   const systemPrompt = `你是一位專業的運動營養師，擁有豐富的健身飲食規劃經驗。你能讀取使用者的健身追蹤數據並給出精準建議。
 
 ${dataCtx}
@@ -2191,12 +2192,10 @@ ${dataCtx}
 - 建議進食時間
 - 訓練日和休息日的差異（如果適用）
 
-格式要清楚易讀，像是你截圖中的風格。如果使用者問到每日目標數字，請給出具體的 kcal、蛋白質g、碳水g、脂肪g 數字，方便套用到飲食記錄頁。`;
+格式要清楚易讀。如果使用者問到每日目標數字，請給出具體的 kcal、蛋白質g、碳水g、脂肪g 數字，方便套用到飲食記錄頁。`;
 
-  // Add to history
   chatHistory.push({ role: 'user', content: text });
 
-  // Build content with images if first message and images uploaded
   let userContent;
   if (inbodyImages.length > 0 && chatHistory.length === 1) {
     userContent = [];
@@ -2209,7 +2208,6 @@ ${dataCtx}
     userContent = text;
   }
 
-  // Build messages (keep last 10 turns for context)
   const msgs = chatHistory.slice(-10).map((m, i) => ({
     role: m.role,
     content: i === chatHistory.length - 1 && userContent !== text ? userContent : m.content
@@ -2236,27 +2234,10 @@ ${dataCtx}
     document.getElementById('ai-apply-section').style.display = 'block';
   } catch(e) {
     removeTyping();
-    appendChatMsg('ai', `❌ 錯誤：${e.message}
-
-請確認 API Key 是否正確，或稍後再試。`);
-    chatHistory.pop(); // remove failed user message from history
+    appendChatMsg('ai', `❌ 錯誤：${e.message}\n\n請確認 API Key 是否正確，或稍後再試。`);
+    chatHistory.pop();
   }
 }
-
-// Keep old runAIAnalysis/runWeeklyReport as quick-prompt wrappers
-async function runAIAnalysis() {
-  quickPrompt('根據我的 InBody 報告和所有追蹤數據，幫我做完整分析並給出訓練日和休息日的詳細每日飲食計畫，包含每餐的食物、克數、時間和營養素');
-}
-async function runWeeklyReport() {
-  quickPrompt('幫我做本週的體重、飲食、訓練綜合追蹤報告，分析做得好和需要改進的地方，並給出下週的行動計畫');
-}
-
-async function getRecentData() {
-  const bodyRecords = await dbSelect('body_records', 'recorded_date');
-  const workoutRecords = await dbSelect('workout_records', 'recorded_date');
-  return { bodyRecords: bodyRecords.slice(0,7), workoutRecords: workoutRecords.slice(0,7), nutritionSummary: [] };
-}
-
 
 function promptNextWeekPlan() {
   quickPrompt(`請根據我目前所有的追蹤數據做完整分析，並幫我規劃下週的飲食和營養目標：
@@ -2275,14 +2256,13 @@ function promptNextWeekPlan() {
 }
 
 // ════════════════════════════════════════════
-// APPLY AI DIET PLAN TO NUTRITION PAGE
+// APPLY AI DIET PLAN
 // ════════════════════════════════════════════
 async function applyAIDietPlan() {
   const text = window._lastAIResponse || '';
   const apiKey = localStorage.getItem('ht_api_key') || '';
   if (!apiKey) { alert('需要 API Key'); return; }
 
-  // Ask Claude to extract nutrition targets from the analysis
   try {
     const resp = await fetch('https://weathered-term-59c1.tt424.workers.dev', {
       method: 'POST',
@@ -2301,20 +2281,15 @@ ${text.slice(0,2000)}` }]
     if (!match) throw new Error('無法解析');
     const targets = JSON.parse(match[0]);
     localStorage.setItem('ht_nutrient_targets', JSON.stringify(targets));
-
-    // Also store diet plan text to show in nutrition page
     localStorage.setItem('ht_diet_plan_text', text.slice(0, 1500));
-
     alert('✅ 飲食建議已套用！請切換到飲食記錄頁查看目標攝取量。');
 
-    // Switch to nutrition tab
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t2 => t2.classList.remove('active'));
     document.getElementById('panel-nutrition').classList.add('active');
     document.querySelectorAll('.tab')[1].classList.add('active');
     renderNutritionDay();
 
-    // Show AI plan card in nutrition page
     const planCard = document.getElementById('ai-diet-plan-card');
     const planText = document.getElementById('ai-diet-plan-text');
     planText.textContent = text.slice(0, 1500);
@@ -2324,7 +2299,6 @@ ${text.slice(0,2000)}` }]
   }
 }
 
-// Load saved diet plan on init
 function loadSavedDietPlan() {
   const plan = localStorage.getItem('ht_diet_plan_text');
   if (plan) {
@@ -2334,39 +2308,8 @@ function loadSavedDietPlan() {
 }
 
 // ════════════════════════════════════════════
-// MINI CHARTS (inline per tab)
+// MINI WORKOUT CHART
 // ════════════════════════════════════════════
-async function renderMiniCalChart() {
-  const calDays = [], calVals = [];
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date(); d.setDate(d.getDate() - i);
-    const ds = d.toISOString().split('T')[0];
-    calDays.push(ds.slice(5));
-    let rows = [];
-    if (!SUPABASE_CONFIGURED) {
-      rows = lsLoad('nutrition_records').filter(r => r.recorded_date === ds);
-    } else {
-      const { data } = await db.from('nutrition_records').select('cal').eq('user_id', currentUser.id).eq('recorded_date', ds);
-      rows = data || [];
-    }
-    const total = rows.reduce((s, r) => s + (r.cal||0), 0);
-    calVals.push(total > 0 ? total : null);
-  }
-  destroyChart('mini-cal');
-  chartInstances['mini-cal'] = new Chart(document.getElementById('mini-cal'), {
-    type: 'bar',
-    data: { labels: calDays, datasets: [{ data: calVals, backgroundColor: 'rgba(251,146,60,0.5)', borderColor: '#fb923c', borderWidth: 1 }] },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: '#64748b', font: { size: 9 }, maxRotation: 45 }, grid: { color: 'rgba(42,47,62,0.5)' } },
-        y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(42,47,62,0.5)' } }
-      }
-    }
-  });
-}
-
 async function renderMiniWorkoutChart(records) {
   const exerciseMap = {};
   [...records].sort((a,b) => a.recorded_date.localeCompare(b.recorded_date)).forEach(r => {
@@ -2432,7 +2375,6 @@ function loadApiKey() {
   if (input) input.value = k;
   if (status) status.textContent = k ? '✓ 已設定' : '未設定 — 點此填入';
   if (status) status.style.color = k ? 'var(--accent)' : 'var(--accent4)';
-  // Auto-open if not set
   if (!k) {
     const body = document.getElementById('api-key-body');
     if (body) body.style.display = 'block';
@@ -2450,7 +2392,7 @@ const CHART_DEFAULTS = {
   plugins: {
     legend: {
       labels: { color: '#94a3b8', font: { size: 11 } },
-      onClick: () => {} // Disable legend click (prevents hiding lines)
+      onClick: () => {}
     }
   },
   scales: {
@@ -2463,7 +2405,6 @@ async function renderAllCharts() {
   const bodyRecs = await dbSelect('body_records', 'recorded_date', true);
   const workoutRecs = await dbSelect('workout_records', 'recorded_date', true);
 
-  // ── Weight chart ──
   destroyChart('weight');
   const wLabels = bodyRecs.map(r => r.recorded_date.slice(5));
   const wMorning = bodyRecs.map(r => r.morning_weight || null);
@@ -2477,10 +2418,9 @@ async function renderAllCharts() {
         { label: '睡前', data: wEvening, borderColor: '#38bdf8', backgroundColor: 'rgba(56,189,248,0.1)', tension: 0.3, pointRadius: 3, spanGaps: true }
       ]
     },
-    options: { ...CHART_DEFAULTS, plugins: { ...CHART_DEFAULTS.plugins } }
+    options: { ...CHART_DEFAULTS }
   });
 
-  // ── Waist chart ──
   destroyChart('waist');
   const waistData = bodyRecs.map(r => r.waist_cm || null);
   chartInstances['waist'] = new Chart(document.getElementById('chart-waist'), {
@@ -2492,7 +2432,6 @@ async function renderAllCharts() {
     options: { ...CHART_DEFAULTS }
   });
 
-  // ── Calories chart (last 14 days) ──
   destroyChart('cal');
   const calDays = [];
   const calVals = [];
@@ -2518,7 +2457,6 @@ async function renderAllCharts() {
     options: { ...CHART_DEFAULTS }
   });
 
-  // ── Workout progress chart ──
   const exerciseMap = {};
   workoutRecs.forEach(r => {
     (r.exercises||[]).forEach(ex => {
@@ -2568,7 +2506,6 @@ function renderExerciseChart(name, map) {
 // ════════════════════════════════════════════
 initAuth();
 
-// Register Service Worker for PWA
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
