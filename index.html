@@ -2462,64 +2462,85 @@ ${dataCtx}`;
   }));
 
   try {
-    // Add timeout for long requests
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 110000); // 110s timeout
+    // Streaming fetch
+    removeTyping();
+
+    // Create streaming bubble
+    const chatMsgs = document.getElementById('chat-messages');
+    const streamDiv = document.createElement('div');
+    streamDiv.className = 'chat-msg ai';
+    streamDiv.innerHTML = '<div class="chat-avatar ai">🤖</div><div class="chat-bubble" id="stream-bubble"></div>';
+    chatMsgs.appendChild(streamDiv);
+    chatMsgs.scrollTop = chatMsgs.scrollHeight;
+    const bubbleEl = document.getElementById('stream-bubble');
+    let fullReply = '';
 
     const resp = await fetch('https://weathered-term-59c1.tt424.workers.dev', {
       method: 'POST',
       headers: { 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
-      signal: controller.signal,
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
-        max_tokens: 3000,
+        max_tokens: 4000,
+        stream: true,
         system: systemPrompt,
         messages: msgs
       })
     });
-    clearTimeout(timeout);
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error.message);
-    const reply = data.content?.map(c=>c.text||'').join('') || '無回應';
-    removeTyping();
-    appendChatMsg('ai', reply);
-    chatHistory.push({ role: 'assistant', content: reply });
-    window._lastAIResponse = reply;
-    document.getElementById('ai-apply-section').style.display = 'block';
 
-    // Parse MEAL_PLAN if present
-    const mealMatch = reply.match(/MEAL_PLAN:(\[[\s\S]+?\])/);
-    if (mealMatch) {
-      try {
-        const plan = JSON.parse(mealMatch[1]);
-        window._lastMealPlan = plan;
-        document.getElementById('ai-meal-import-section').style.display = 'block';
-      } catch(e) {}
+    if (!resp.ok) {
+      const errData = await resp.json();
+      throw new Error(errData.error?.message || 'API error ' + resp.status);
     }
 
-    // Auto-apply if triggered by next week plan button
-    if (window._autoApplyAfterReply) {
-      window._autoApplyAfterReply = false;
-      // Try to extract TARGETS from reply directly first
-      const targetsMatch = reply.match(/TARGETS:\s*(\{[^}]+\})/);
-      if (targetsMatch) {
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]') continue;
         try {
-          const targets = JSON.parse(targetsMatch[1]);
-          if (targets.cal && targets.protein) {
-            localStorage.setItem('ht_nutrient_targets', JSON.stringify(targets));
-            localStorage.setItem('ht_diet_plan_text', reply.replace(/TARGETS:\{[^}]+\}/, '').trim().slice(0, 2000));
-            appendChatMsg('ai', `✅ 營養目標已自動套用到飲食記錄頁！\n熱量 ${targets.cal}kcal｜蛋白質 ${targets.protein}g｜碳水 ${targets.carb}g｜脂肪 ${targets.fat}g`);
-            // Update nutrition page targets
-            const planCard = document.getElementById('ai-diet-plan-card');
-            const planText = document.getElementById('ai-diet-plan-text');
-            if (planText) planText.textContent = reply.slice(0, 2000);
-            if (planCard) planCard.style.display = 'block';
-            return;
+          const parsed = JSON.parse(raw);
+          if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+            fullReply += parsed.delta.text;
+            bubbleEl.innerHTML = fullReply
+              .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+              .replace(/\n/g,'<br>')
+              .replace(/\*\*(.*?)\*\*/g,'<b>$1</b>');
+            chatMsgs.scrollTop = chatMsgs.scrollHeight;
           }
         } catch(e) {}
       }
-      // Fallback: use Haiku to extract targets
-      applyAIDietPlan();
+    }
+    bubbleEl.removeAttribute('id');
+
+    chatHistory.push({ role: 'assistant', content: fullReply });
+    window._lastAIResponse = fullReply;
+    document.getElementById('ai-apply-section').style.display = 'block';
+
+    // Auto-apply nutrition targets
+    if (window._autoApplyAfterReply) {
+      window._autoApplyAfterReply = false;
+      const targetsMatch = fullReply.match(/TARGETS:\{"cal":(\d+),"protein":(\d+),"carb":(\d+),"fat":(\d+)\}/);
+      if (targetsMatch) {
+        const targets = { cal: +targetsMatch[1], protein: +targetsMatch[2], carb: +targetsMatch[3], fat: +targetsMatch[4] };
+        localStorage.setItem('ht_nutrient_targets', JSON.stringify(targets));
+        localStorage.setItem('ht_diet_plan_text', fullReply.slice(0, 3000));
+        appendChatMsg('ai', `✅ 營養目標已自動套用！\n熱量 ${targets.cal}kcal｜蛋白質 ${targets.protein}g｜碳水 ${targets.carb}g｜脂肪 ${targets.fat}g`);
+        const planCard = document.getElementById('ai-diet-plan-card');
+        const planText = document.getElementById('ai-diet-plan-text');
+        if (planText) planText.textContent = fullReply.slice(0, 3000);
+        if (planCard) planCard.style.display = 'block';
+      } else {
+        applyAIDietPlan();
+      }
     }
   } catch(e) {
     removeTyping();
