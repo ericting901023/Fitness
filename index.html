@@ -1070,7 +1070,7 @@ async function signInWithGitHub() {
   });
 }
 
-function showApp() {
+async function showApp() {
   document.getElementById('loading-screen').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
@@ -1093,8 +1093,9 @@ function showApp() {
   renderNutritionDay();
   renderWorkoutHistory();
   loadApiKey();
-  loadSavedDietPlan();
-  loadInbodyData();
+  await loadUserSettings();
+  await loadSavedDietPlan();
+  await loadInbodyData();
   renderFoodLibrary();
   setTimeout(restoreDraftFromLocal, 500);
 }
@@ -1339,8 +1340,11 @@ function clearFoodForm() {
   s.style.color = 'var(--accent2)';
 }
 
-function renderFoodLibrary() {
-  const lib = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
+// ── 食物庫快取（避免每次都查 DB）──
+let _foodLibCache = null;
+
+async function renderFoodLibrary() {
+  const lib = await getFoodLibrary();
   const el = document.getElementById('food-library-btns');
   if (!lib.length) {
     el.innerHTML = '<span style="font-size:12px;color:var(--text-muted)">尚無常用食物，新增食物後點「儲存到食物庫」</span>';
@@ -1353,23 +1357,44 @@ function renderFoodLibrary() {
     </button>`).join('');
 }
 
-function saveToFoodLibrary() {
+async function getFoodLibrary() {
+  if (_foodLibCache) return _foodLibCache;
+  if (!SUPABASE_CONFIGURED) {
+    _foodLibCache = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
+    return _foodLibCache;
+  }
+  const { data } = await db.from('food_library').select('*').eq('user_id', currentUser.id).order('name');
+  _foodLibCache = (data || []).map(r => ({ name: r.name, cal100: r.cal100, protein100: r.protein100, carb100: r.carb100, fat100: r.fat100 }));
+  return _foodLibCache;
+}
+
+async function saveToFoodLibrary() {
   const name = document.getElementById('food-name').value.trim();
-  const cal = document.getElementById('food-cal').value;
-  const protein = document.getElementById('food-protein').value;
-  const carb = document.getElementById('food-carb').value;
-  const fat = document.getElementById('food-fat').value;
   if (!name) { alert('請先輸入食物名稱'); return; }
-  const lib = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
-  if (lib.find(f => f.name === name)) { alert('食物庫已有此項目'); return; }
-  lib.push({ name, cal100: parseFloat(cal)||0, protein100: parseFloat(protein)||0, carb100: parseFloat(carb)||0, fat100: parseFloat(fat)||0 });
-  localStorage.setItem('ht_food_library', JSON.stringify(lib));
+  const entry = {
+    name,
+    cal100:     parseFloat(document.getElementById('food-cal').value)     || 0,
+    protein100: parseFloat(document.getElementById('food-protein').value) || 0,
+    carb100:    parseFloat(document.getElementById('food-carb').value)    || 0,
+    fat100:     parseFloat(document.getElementById('food-fat').value)     || 0,
+  };
+  if (!SUPABASE_CONFIGURED) {
+    const lib = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
+    if (lib.find(f => f.name === name)) { alert('食物庫已有此項目'); return; }
+    lib.push(entry);
+    localStorage.setItem('ht_food_library', JSON.stringify(lib));
+  } else {
+    const { error } = await db.from('food_library')
+      .upsert({ ...entry, user_id: currentUser.id }, { onConflict: 'user_id,name' });
+    if (error) { setSyncStatus('error', '✗ 儲存失敗'); return; }
+  }
+  _foodLibCache = null; // 清快取
   renderFoodLibrary();
   setSyncStatus('synced', `✓「${name}」已儲存到食物庫`);
 }
 
-function loadFromLibrary(i) {
-  const lib = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
+async function loadFromLibrary(i) {
+  const lib = await getFoodLibrary();
   const f = lib[i];
   if (!f) return;
   document.getElementById('food-name').value = f.name;
@@ -1379,10 +1404,17 @@ function loadFromLibrary(i) {
   document.getElementById('food-fat').value = f.fat100 || '';
 }
 
-function deleteFromLibrary(i) {
-  const lib = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
-  lib.splice(i, 1);
-  localStorage.setItem('ht_food_library', JSON.stringify(lib));
+async function deleteFromLibrary(i) {
+  const lib = await getFoodLibrary();
+  const f = lib[i];
+  if (!f) return;
+  if (!SUPABASE_CONFIGURED) {
+    lib.splice(i, 1);
+    localStorage.setItem('ht_food_library', JSON.stringify(lib));
+  } else {
+    await db.from('food_library').delete().eq('user_id', currentUser.id).eq('name', f.name);
+  }
+  _foodLibCache = null;
   renderFoodLibrary();
 }
 
@@ -1441,7 +1473,8 @@ async function renderNutritionDay() {
 }
 
 function updateNutrientBoxes(totals) {
-  const targets = JSON.parse(localStorage.getItem('ht_nutrient_targets') || '{}');
+  const targets = (_userSettingsCache && _userSettingsCache.nutrient_targets) ||
+    JSON.parse(localStorage.getItem('ht_nutrient_targets') || '{}');
   const fields = [
     { cur:'nt-cal-cur', tgt:'nt-cal-tgt', rem:'nt-cal-rem', bar:'nt-cal-bar', key:'cal', unit:'kcal', color:'#6ee7b7' },
     { cur:'nt-p-cur',   tgt:'nt-p-tgt',   rem:'nt-p-rem',   bar:'nt-p-bar',   key:'protein', unit:'g', color:'#fb923c' },
@@ -2265,7 +2298,7 @@ ${exTrendLines.length ? exTrendLines.join('\n') : '尚無足夠記錄（需同�
 訓練分化：胸+三頭 / 背+二頭 / 腿+腹肌 / 肩+小臂 / 休息 / 上半身 / 有氧
 ${recentWorkoutLog}
 
-${getInbodyContext()}`;
+${await getInbodyContext()}`;
 }
 
 async function sendChatMessage() {
@@ -2358,7 +2391,7 @@ function promptNextWeekPlan() {
 }
 
 // ════════════════════════════════════════════
-// APPLY AI DIET PLAN
+// APPLY AI DIET PLAN — 存到 Supabase user_settings
 // ════════════════════════════════════════════
 async function applyAIDietPlan() {
   const text = window._lastAIResponse || '';
@@ -2371,10 +2404,7 @@ async function applyAIDietPlan() {
       headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01' },
       body: JSON.stringify({
         model:'claude-haiku-4-5', max_tokens:200,
-        messages:[{ role:'user', content:`從以下 AI 分析中提取建議的每日營養素目標數字。只回傳 JSON，不要其他文字：{"cal":數字,"protein":數字,"carb":數字,"fat":數字}
-
-分析內容：
-${text.slice(0,2000)}` }]
+        messages:[{ role:'user', content:`從以下 AI 分析中提取建議的每日營養素目標數字。只回傳 JSON，不要其他文字：{"cal":數字,"protein":數字,"carb":數字,"fat":數字}\n\n分析內容：\n${text.slice(0,2000)}` }]
       })
     });
     const data = await resp.json();
@@ -2382,8 +2412,9 @@ ${text.slice(0,2000)}` }]
     const match = t.match(/\{[^}]+\}/);
     if (!match) throw new Error('無法解析');
     const targets = JSON.parse(match[0]);
-    localStorage.setItem('ht_nutrient_targets', JSON.stringify(targets));
-    localStorage.setItem('ht_diet_plan_text', text.slice(0, 1500));
+    const planText = text.slice(0, 3000);
+
+    await saveUserSettings({ nutrient_targets: targets, diet_plan_text: planText });
     alert('✅ 飲食建議已套用！請切換到飲食記錄頁查看目標攝取量。');
 
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -2392,64 +2423,116 @@ ${text.slice(0,2000)}` }]
     document.querySelectorAll('.tab')[1].classList.add('active');
     renderNutritionDay();
 
-    const planCard = document.getElementById('ai-diet-plan-card');
-    const planText = document.getElementById('ai-diet-plan-text');
-    planText.textContent = text.slice(0, 1500);
-    planCard.style.display = 'block';
+    document.getElementById('ai-diet-plan-text').textContent = planText;
+    document.getElementById('ai-diet-plan-card').style.display = 'block';
   } catch(e) {
     alert('套用失敗：' + e.message);
   }
 }
 
 // ════════════════════════════════════════════
-// INBODY DATA — 多筆歷史記錄 (localStorage)
+// USER SETTINGS — Supabase (nutrient_targets, diet_plan_text, ai_goal/height/age)
 // ════════════════════════════════════════════
-function saveInbodyData() {
+let _userSettingsCache = null;
+
+async function saveUserSettings(patch) {
+  if (!SUPABASE_CONFIGURED) {
+    // fallback: localStorage
+    const cur = JSON.parse(localStorage.getItem('ht_user_settings') || '{}');
+    const merged = { ...cur, ...patch };
+    localStorage.setItem('ht_user_settings', JSON.stringify(merged));
+    _userSettingsCache = merged;
+    return;
+  }
+  // upsert by user_id
+  const { error } = await db.from('user_settings')
+    .upsert({ user_id: currentUser.id, ...patch }, { onConflict: 'user_id' });
+  if (error) console.error('saveUserSettings error:', error);
+  else _userSettingsCache = { ..._userSettingsCache, ...patch };
+}
+
+async function loadUserSettings() {
+  if (!SUPABASE_CONFIGURED) {
+    _userSettingsCache = JSON.parse(localStorage.getItem('ht_user_settings') || '{}');
+    return _userSettingsCache;
+  }
+  const { data, error } = await db.from('user_settings')
+    .select('*').eq('user_id', currentUser.id).single();
+  if (error || !data) { _userSettingsCache = {}; return {}; }
+  _userSettingsCache = data;
+  return data;
+}
+
+// ════════════════════════════════════════════
+// INBODY DATA — Supabase inbody_records
+// ════════════════════════════════════════════
+async function saveInbodyData() {
+  const date = document.getElementById('ib-date').value || today();
   const entry = {
-    date:     document.getElementById('ib-date').value || today(),
-    weight:   document.getElementById('ib-weight').value,
-    muscle:   document.getElementById('ib-muscle').value,
-    fatMass:  document.getElementById('ib-fat-mass').value,
-    fatPct:   document.getElementById('ib-fat-pct').value,
-    bmi:      document.getElementById('ib-bmi').value,
-    bmr:      document.getElementById('ib-bmr').value,
-    visceral: document.getElementById('ib-visceral').value,
-    water:    document.getElementById('ib-water').value,
+    recorded_date: date,
+    weight:   parseFloat(document.getElementById('ib-weight').value)   || null,
+    muscle:   parseFloat(document.getElementById('ib-muscle').value)   || null,
+    fat_mass: parseFloat(document.getElementById('ib-fat-mass').value) || null,
+    fat_pct:  parseFloat(document.getElementById('ib-fat-pct').value)  || null,
+    bmi:      parseFloat(document.getElementById('ib-bmi').value)      || null,
+    bmr:      parseInt(document.getElementById('ib-bmr').value)        || null,
+    visceral: parseInt(document.getElementById('ib-visceral').value)   || null,
+    water:    parseFloat(document.getElementById('ib-water').value)    || null,
   };
-  const hasAny = Object.entries(entry).some(([k,v]) => k !== 'date' && v);
+  const hasAny = Object.entries(entry).some(([k,v]) => k !== 'recorded_date' && v !== null);
   if (!hasAny) { alert('請至少填入一項數據'); return; }
 
-  const records = loadInbodyRecords();
-  // 同日期則覆蓋，不同日期則新增
-  const idx = records.findIndex(r => r.date === entry.date);
-  if (idx >= 0) { records[idx] = entry; } else { records.push(entry); }
-  // 按日期排序（新 → 舊）
-  records.sort((a,b) => b.date.localeCompare(a.date));
-  localStorage.setItem('ht_inbody_history', JSON.stringify(records));
+  setSyncStatus('saving', '⟳ 同步中...');
+  if (!SUPABASE_CONFIGURED) {
+    const records = loadInbodyRecordsLocal();
+    const idx = records.findIndex(r => r.recorded_date === date);
+    if (idx >= 0) records[idx] = { ...entry, id: records[idx].id };
+    else records.push({ ...entry, id: Date.now() });
+    records.sort((a,b) => b.recorded_date.localeCompare(a.recorded_date));
+    localStorage.setItem('ht_inbody_history', JSON.stringify(records));
+  } else {
+    const { error } = await db.from('inbody_records')
+      .upsert({ ...entry, user_id: currentUser.id }, { onConflict: 'user_id,recorded_date' });
+    if (error) { setSyncStatus('error', '✗ 儲存失敗'); console.error(error); return; }
+  }
 
-  // 清空表單
   ['ib-weight','ib-muscle','ib-fat-mass','ib-fat-pct','ib-bmi','ib-bmr','ib-visceral','ib-water']
     .forEach(id => document.getElementById(id).value = '');
   document.getElementById('ib-date').value = today();
 
-  renderInbodyHistory();
-  setSyncStatus('synced', `✓ InBody ${entry.date} 已儲存`);
+  setSyncStatus('synced', `✓ InBody ${date} 已同步`);
+  await renderInbodyHistory();
 }
 
-function loadInbodyRecords() {
+async function loadInbodyRecords() {
+  if (!SUPABASE_CONFIGURED) return loadInbodyRecordsLocal();
+  const { data, error } = await db.from('inbody_records')
+    .select('*').eq('user_id', currentUser.id).order('recorded_date', { ascending: false });
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+
+function loadInbodyRecordsLocal() {
   try { return JSON.parse(localStorage.getItem('ht_inbody_history') || '[]'); }
   catch(e) { return []; }
 }
 
-function deleteInbodyRecord(date) {
+async function deleteInbodyRecord(date) {
   if (!confirm(`確定刪除 ${date} 的 InBody 紀錄？`)) return;
-  const records = loadInbodyRecords().filter(r => r.date !== date);
-  localStorage.setItem('ht_inbody_history', JSON.stringify(records));
-  renderInbodyHistory();
+  setSyncStatus('saving', '⟳ 同步中...');
+  if (!SUPABASE_CONFIGURED) {
+    const records = loadInbodyRecordsLocal().filter(r => r.recorded_date !== date);
+    localStorage.setItem('ht_inbody_history', JSON.stringify(records));
+  } else {
+    await db.from('inbody_records').delete()
+      .eq('user_id', currentUser.id).eq('recorded_date', date);
+  }
+  setSyncStatus('synced', '✓ 已刪除');
+  await renderInbodyHistory();
 }
 
-function renderInbodyHistory() {
-  const records = loadInbodyRecords();
+async function renderInbodyHistory() {
+  const records = await loadInbodyRecords();
   const countEl = document.getElementById('inbody-count');
   if (countEl) countEl.textContent = records.length + ' 筆';
   const container = document.getElementById('inbody-history-list');
@@ -2459,70 +2542,96 @@ function renderInbodyHistory() {
     return;
   }
   container.innerHTML = records.map(r => {
+    // 相容 Supabase 欄位名（snake_case）和舊 localStorage 格式（camelCase）
+    const weight   = r.weight;
+    const muscle   = r.muscle;
+    const fatPct   = r.fat_pct   ?? r.fatPct;
+    const fatMass  = r.fat_mass  ?? r.fatMass;
+    const bmr      = r.bmr;
+    const bmi      = r.bmi;
+    const visceral = r.visceral;
+    const water    = r.water;
+    const date     = r.recorded_date ?? r.date;
     const fields = [
-      r.weight   ? `體重 ${r.weight}kg`     : '',
-      r.muscle   ? `骨骼肌 ${r.muscle}kg`   : '',
-      r.fatPct   ? `體脂 ${r.fatPct}%`      : '',
-      r.fatMass  ? `脂肪 ${r.fatMass}kg`    : '',
-      r.bmr      ? `BMR ${r.bmr}kcal`       : '',
-      r.bmi      ? `BMI ${r.bmi}`           : '',
-      r.visceral ? `內臟脂肪 lv.${r.visceral}` : '',
-      r.water    ? `水重 ${r.water}L`        : '',
+      weight   ? `體重 ${weight}kg`        : '',
+      muscle   ? `骨骼肌 ${muscle}kg`      : '',
+      fatPct   ? `體脂 ${fatPct}%`         : '',
+      fatMass  ? `脂肪 ${fatMass}kg`       : '',
+      bmr      ? `BMR ${bmr}kcal`          : '',
+      bmi      ? `BMI ${bmi}`              : '',
+      visceral ? `內臟脂肪 lv.${visceral}` : '',
+      water    ? `水重 ${water}L`          : '',
     ].filter(Boolean);
     return `<div class="history-item" style="margin-bottom:6px">
       <div>
-        <div class="history-date">${r.date}</div>
+        <div class="history-date">${date}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px">
           ${fields.map(f => `<span class="badge badge-blue" style="font-size:10px">${f}</span>`).join('')}
         </div>
       </div>
-      <button class="btn btn-danger btn-sm" onclick="deleteInbodyRecord('${r.date}')">刪除</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteInbodyRecord('${date}')">刪除</button>
     </div>`;
   }).join('');
 }
 
-function loadInbodyData() {
-  // 舊版單筆格式遷移（ht_inbody → ht_inbody_history）
-  const oldRaw = localStorage.getItem('ht_inbody');
-  if (oldRaw) {
-    try {
-      const old = JSON.parse(oldRaw);
-      const existing = loadInbodyRecords();
-      if (old.date && !existing.find(r => r.date === old.date)) {
-        existing.push(old);
-        existing.sort((a,b) => b.date.localeCompare(a.date));
-        localStorage.setItem('ht_inbody_history', JSON.stringify(existing));
-      }
-      localStorage.removeItem('ht_inbody');
-    } catch(e) {}
+async function loadInbodyData() {
+  // 舊版 localStorage 遷移到 Supabase（第一次登入時執行）
+  if (SUPABASE_CONFIGURED) {
+    const oldRaw = localStorage.getItem('ht_inbody_history');
+    if (oldRaw) {
+      try {
+        const oldRecords = JSON.parse(oldRaw);
+        for (const r of oldRecords) {
+          const date = r.recorded_date || r.date;
+          if (!date) continue;
+          await db.from('inbody_records').upsert({
+            user_id: currentUser.id,
+            recorded_date: date,
+            weight:   parseFloat(r.weight)   || null,
+            muscle:   parseFloat(r.muscle)   || null,
+            fat_mass: parseFloat(r.fat_mass || r.fatMass) || null,
+            fat_pct:  parseFloat(r.fat_pct  || r.fatPct)  || null,
+            bmi:      parseFloat(r.bmi)      || null,
+            bmr:      parseInt(r.bmr)        || null,
+            visceral: parseInt(r.visceral)   || null,
+            water:    parseFloat(r.water)    || null,
+          }, { onConflict: 'user_id,recorded_date' });
+        }
+        localStorage.removeItem('ht_inbody_history');
+        localStorage.removeItem('ht_inbody');
+      } catch(e) { console.error('InBody migration error:', e); }
+    }
   }
-  renderInbodyHistory();
+  await renderInbodyHistory();
 }
 
-function getInbodyContext() {
-  const records = loadInbodyRecords();
+async function getInbodyContext() {
+  const records = await loadInbodyRecords();
   if (!records.length) return '【InBody 歷史】未填入';
-  // 按日期由舊到新排列，讓 AI 看到趨勢
-  const sorted = [...records].sort((a,b) => a.date.localeCompare(b.date));
+  const sorted = [...records].sort((a,b) => (a.recorded_date||a.date).localeCompare(b.recorded_date||b.date));
   const lines = sorted.map(r => {
-    const parts = [r.date];
-    if (r.weight)   parts.push(`體重${r.weight}kg`);
-    if (r.muscle)   parts.push(`骨骼肌${r.muscle}kg`);
-    if (r.fatMass)  parts.push(`體脂肪${r.fatMass}kg`);
-    if (r.fatPct)   parts.push(`體脂率${r.fatPct}%`);
-    if (r.bmi)      parts.push(`BMI ${r.bmi}`);
-    if (r.bmr)      parts.push(`BMR ${r.bmr}kcal`);
-    if (r.visceral) parts.push(`內臟脂肪lv.${r.visceral}`);
-    if (r.water)    parts.push(`水重${r.water}L`);
+    const parts = [r.recorded_date || r.date];
+    if (r.weight)                     parts.push(`體重${r.weight}kg`);
+    if (r.muscle)                     parts.push(`骨骼肌${r.muscle}kg`);
+    if (r.fat_mass  ?? r.fatMass)     parts.push(`體脂肪${r.fat_mass ?? r.fatMass}kg`);
+    if (r.fat_pct   ?? r.fatPct)      parts.push(`體脂率${r.fat_pct ?? r.fatPct}%`);
+    if (r.bmi)                        parts.push(`BMI ${r.bmi}`);
+    if (r.bmr)                        parts.push(`BMR ${r.bmr}kcal`);
+    if (r.visceral)                   parts.push(`內臟脂肪lv.${r.visceral}`);
+    if (r.water)                      parts.push(`水重${r.water}L`);
     return parts.join(' | ');
   });
   return `【InBody 歷史（${records.length}筆，由舊至新）】\n` + lines.join('\n');
 }
 
-function loadSavedDietPlan() {
-  const plan = localStorage.getItem('ht_diet_plan_text');
-  if (plan) {
-    document.getElementById('ai-diet-plan-text').textContent = plan;
+async function loadSavedDietPlan() {
+  let planText = '';
+  const settings = await loadUserSettings();
+  planText = settings.diet_plan_text || '';
+  // fallback localStorage
+  if (!planText) planText = localStorage.getItem('ht_diet_plan_text') || '';
+  if (planText) {
+    document.getElementById('ai-diet-plan-text').textContent = planText;
     document.getElementById('ai-diet-plan-card').style.display = 'block';
   }
 }
