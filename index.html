@@ -387,6 +387,58 @@
 
 
 
+
+  /* ── SET ROW GRID ── */
+  .set-row, .ew-set {
+    display: grid;
+    grid-template-columns: 1fr 44px 44px 70px 50px 28px;
+    gap: 4px;
+    align-items: center;
+    margin-bottom: 6px;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .set-row-header {
+    display: grid;
+    grid-template-columns: 1fr 44px 44px 70px 50px 28px;
+    gap: 4px;
+    margin-bottom: 4px;
+    font-size: 10px;
+    color: var(--text-dim);
+    padding: 0 2px;
+    min-width: 0;
+  }
+  .set-row > *, .ew-set > * {
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .set-row input, .ew-set input {
+    width: 100%;
+    padding: 8px 3px;
+    font-size: 12px;
+    text-align: center;
+  }
+  .set-row input.sr-label, .ew-set input.ew-label {
+    text-align: left;
+    padding: 8px 6px;
+  }
+  .set-row select, .ew-set select {
+    width: 100%;
+    font-size: 11px;
+    padding: 8px 1px;
+    text-align: center;
+  }
+  .set-row .btn-danger, .ew-set .btn-danger {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+    padding: 0 !important;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
   /* ── AI CHAT UI ── */
   .chat-container { display: flex; flex-direction: column; height: 520px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
   .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
@@ -1422,7 +1474,7 @@ function addExerciseInput(name = '', prefillSets = []) {
       <input type="text" placeholder="動作名稱" value="${name}" style="flex:1;font-size:14px;font-weight:600" class="ex-name">
       <button class="btn btn-danger btn-sm" onclick="document.getElementById('${id}').remove()" style="padding:5px 10px">✕</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 55px 55px 90px 60px 36px;gap:6px;margin-bottom:4px;font-size:10px;color:var(--text-dim);padding:0 2px">
+    <div class="set-row-header">
       <span>名稱</span><span style="text-align:center">組數</span><span style="text-align:center">次數</span><span style="text-align:center">重量</span><span style="text-align:center">單位</span><span></span>
     </div>
     <div class="sets-container">
@@ -1434,16 +1486,16 @@ function addExerciseInput(name = '', prefillSets = []) {
 }
 
 function buildSetRowHTML(exId, label='', sets='', reps='', weight='', unit='kg') {
-  return `<div class="set-row" style="display:grid;grid-template-columns:1fr 55px 55px 90px 60px 36px;gap:6px;margin-bottom:6px;align-items:center">
-    <input type="text" class="sr-label" placeholder="熱身/正式組" value="${label}" style="font-size:12px;padding:7px 8px">
-    <input type="number" class="sr-sets" placeholder="組" value="${sets}" min="1" max="20" style="font-size:13px;text-align:center;padding:7px 4px">
-    <input type="number" class="sr-reps" placeholder="次" value="${reps}" min="1" max="100" style="font-size:13px;text-align:center;padding:7px 4px">
-    <input type="number" class="sr-weight" placeholder="重量" value="${weight}" step="0.5" style="font-size:13px;text-align:center;padding:7px 6px">
-    <select class="sr-unit" style="font-size:11px;padding:7px 3px;text-align:center">
+  return `<div class="set-row">
+    <input type="text" class="sr-label" placeholder="熱身/正式組" value="${label}" style="font-size:12px">
+    <input type="number" class="sr-sets" placeholder="組" value="${sets}" min="1" max="20" style="font-size:13px;text-align:center">
+    <input type="number" class="sr-reps" placeholder="次" value="${reps}" min="1" max="100" style="font-size:13px;text-align:center">
+    <input type="number" class="sr-weight" placeholder="重量" value="${weight}" step="0.5" style="font-size:13px;text-align:center">
+    <select class="sr-unit">
       <option value="kg" ${unit==='kg'?'selected':''}>kg</option>
       <option value="lb" ${unit==='lb'?'selected':''}>磅</option>
     </select>
-    <button class="btn btn-danger btn-sm" onclick="this.closest('.set-row').remove()" style="padding:5px 8px;font-size:11px">✕</button>
+    <button class="btn btn-danger btn-sm" onclick="this.closest('.set-row').remove()" style="padding:0;width:34px;height:34px;justify-content:center">✕</button>
   </div>`;
 }
 
@@ -1674,7 +1726,7 @@ function addEwSetRow() {
   if (!exercises.length) return;
   const lastEx = exercises[exercises.length - 1];
   const container = lastEx.querySelector('.ew-sets-container') || lastEx;
-  const newRow = `<div style="display:grid;grid-template-columns:1fr 55px 55px 90px 60px 36px;gap:6px;margin-bottom:5px;align-items:center" class="ew-set">
+  const newRow = `<div class="ew-set">
     <input type="text" class="ew-label" value="正式組" placeholder="熱身/正式組" style="font-size:12px">
     <input type="number" class="ew-sets-n" value="1" min="1" placeholder="組" style="font-size:12px;text-align:center">
     <input type="number" class="ew-reps" value="" placeholder="次" style="font-size:12px;text-align:center">
@@ -1683,7 +1735,7 @@ function addEwSetRow() {
       <option value="kg">kg</option>
       <option value="lb">磅</option>
     </select>
-    <button class="btn btn-danger btn-sm" onclick="this.closest('.ew-set').remove()" style="padding:4px 7px;font-size:11px">✕</button>
+    <button class="btn btn-danger btn-sm" onclick="this.closest('.ew-set').remove()" style="padding:0;width:34px;height:34px;justify-content:center">✕</button>
   </div>`;
   // Insert before the add button
   const addBtn = document.querySelector('#modal-body button.btn-secondary');
@@ -1760,7 +1812,7 @@ async function editWorkoutRecord(id) {
       groups[key].count++;
     });
     const setsHtml = Object.values(groups).map(g =>
-      `<div style="display:grid;grid-template-columns:1fr 55px 55px 90px 60px 36px;gap:6px;margin-bottom:5px;align-items:center" class="ew-set">
+      `<div class="ew-set">
         <input type="text" class="ew-label" value="${g.label}" placeholder="熱身/正式組" style="font-size:12px">
         <input type="number" class="ew-sets-n" value="${g.count}" min="1" placeholder="組" style="font-size:12px;text-align:center">
         <input type="number" class="ew-reps" value="${g.reps}" placeholder="次" style="font-size:12px;text-align:center">
@@ -1771,7 +1823,7 @@ async function editWorkoutRecord(id) {
             <option value="lb">磅</option>
           </select>
         </div>
-        <button class="btn btn-danger btn-sm" onclick="this.closest('.ew-set').remove()" style="padding:4px 7px;font-size:11px">✕</button>
+        <button class="btn btn-danger btn-sm" onclick="this.closest('.ew-set').remove()" style="padding:0;width:34px;height:34px;justify-content:center">✕</button>
       </div>`
     ).join('');
     return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px" id="ew-ex-${ei}">
@@ -1779,7 +1831,7 @@ async function editWorkoutRecord(id) {
         <input type="text" class="ew-name" value="${ex.name}" style="flex:1;font-size:14px;font-weight:600">
         <button class="btn btn-danger btn-sm" onclick="document.getElementById('ew-ex-${ei}').remove()" style="padding:4px 8px">✕</button>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 55px 55px 90px 60px 36px;gap:6px;margin-bottom:4px;font-size:10px;color:var(--text-dim);padding:0 2px">
+      <div class="set-row-header">
         <span>名稱</span><span style="text-align:center">組數</span><span style="text-align:center">次數</span><span style="text-align:center">重量</span><span style="text-align:center">單位</span><span></span>
       </div>
       ${setsHtml}
