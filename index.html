@@ -813,7 +813,13 @@
         <div class="chart-wrap"><canvas id="chart-cal"></canvas></div>
       </div>
       <div class="chart-card">
-        <div class="chart-title">💪 訓練重量進步</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div class="chart-title" style="margin-bottom:0">💪 訓練進步追蹤</div>
+          <div style="display:flex;gap:6px">
+            <button class="chart-tab active" id="metric-maxw-btn" onclick="switchChartMetric('maxW', this)" style="font-size:11px;padding:4px 10px">最大重量</button>
+            <button class="chart-tab" id="metric-vol-btn" onclick="switchChartMetric('volume', this)" style="font-size:11px;padding:4px 10px">訓練容量</button>
+          </div>
+        </div>
         <div class="chart-tabs" id="exercise-chart-tabs"></div>
         <div class="chart-wrap"><canvas id="chart-workout"></canvas></div>
       </div>
@@ -2392,8 +2398,10 @@ async function renderMiniWorkoutChart(records) {
   [...records].sort((a,b) => a.recorded_date.localeCompare(b.recorded_date)).forEach(r => {
     (r.exercises||[]).forEach(ex => {
       if (!exerciseMap[ex.name]) exerciseMap[ex.name] = [];
-      const maxW = Math.max(...(ex.sets||[]).map(s => s.weight||0));
-      if (maxW > 0) exerciseMap[ex.name].push({ date: r.recorded_date.slice(5), weight: maxW });
+      const workSets = (ex.sets||[]).filter(s => s.label !== '熱身' && (s.weight||0) > 0);
+      const maxW = Math.max(0, ...(ex.sets||[]).map(s => s.weight||0));
+      const volume = Math.round(workSets.reduce((sum, s) => sum + (s.weight||0)*(s.reps||0), 0));
+      if (maxW > 0) exerciseMap[ex.name].push({ date: r.recorded_date.slice(5), weight: maxW, volume });
     });
   });
   const exNames = Object.keys(exerciseMap).filter(n => exerciseMap[n].length > 1);
@@ -2543,8 +2551,10 @@ async function renderAllCharts() {
   workoutRecs.forEach(r => {
     (r.exercises||[]).forEach(ex => {
       if (!exerciseMap[ex.name]) exerciseMap[ex.name] = [];
-      const maxW = Math.max(...(ex.sets||[]).map(s => s.weight||0));
-      if (maxW > 0) exerciseMap[ex.name].push({ date: r.recorded_date.slice(5), weight: maxW });
+      const workSets2 = (ex.sets||[]).filter(s => s.label !== '熱身' && (s.weight||0) > 0);
+      const maxW = Math.max(0, ...(ex.sets||[]).map(s => s.weight||0));
+      const volume2 = Math.round(workSets2.reduce((sum,s) => sum+(s.weight||0)*(s.reps||0), 0));
+      if (maxW > 0) exerciseMap[ex.name].push({ date: r.recorded_date.slice(5), maxW, volume: volume2 });
     });
   });
 
@@ -2560,24 +2570,41 @@ async function renderAllCharts() {
     `<button class="chart-tab ${i===0?'active':''}" onclick="switchExerciseChart('${n}', this)">${n}</button>`
   ).join('');
 
-  renderExerciseChart(exNames[0], exerciseMap);
   window._exerciseMap = exerciseMap;
+  window._chartMetric = window._chartMetric || 'maxW';
+  window._currentExercise = exNames[0];
+  renderExerciseChart(exNames[0], exerciseMap, window._chartMetric);
 }
 
 function switchExerciseChart(name, el) {
-  document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+  // Only update exercise tabs, not metric tabs
+  document.querySelectorAll('#exercise-chart-tabs .chart-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
-  renderExerciseChart(name, window._exerciseMap);
+  window._currentExercise = name;
+  renderExerciseChart(name, window._exerciseMap, window._chartMetric || 'maxW');
 }
 
-function renderExerciseChart(name, map) {
+function switchChartMetric(metric, el) {
+  document.getElementById('metric-maxw-btn').classList.toggle('active', metric === 'maxW');
+  document.getElementById('metric-vol-btn').classList.toggle('active', metric === 'volume');
+  window._chartMetric = metric;
+  const name = window._currentExercise || Object.keys(window._exerciseMap||{})[0];
+  if (name) renderExerciseChart(name, window._exerciseMap, metric);
+}
+
+function renderExerciseChart(name, map, metric = 'maxW') {
   destroyChart('workout');
   const pts = map[name] || [];
+  const isVol = metric === 'volume';
+  const data = pts.map(p => isVol ? p.volume : p.maxW);
+  const label = isVol ? name + ' 訓練容量 (kg)' : name + ' 最大重量 (kg)';
+  const color = isVol ? '#fb923c' : '#6366f1';
+  const bgColor = isVol ? 'rgba(251,146,60,0.1)' : 'rgba(99,102,241,0.1)';
   chartInstances['workout'] = new Chart(document.getElementById('chart-workout'), {
     type: 'line',
     data: {
       labels: pts.map(p => p.date),
-      datasets: [{ label: name + ' 最大重量 (kg)', data: pts.map(p => p.weight), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', tension: 0.3, pointRadius: 4 }]
+      datasets: [{ label, data, borderColor: color, backgroundColor: bgColor, tension: 0.3, pointRadius: 4 }]
     },
     options: { ...CHART_DEFAULTS }
   });
