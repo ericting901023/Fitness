@@ -1474,7 +1474,9 @@ async function selectWorkoutDay(day, el) {
         const groups = {};
         lastEx.sets.forEach(s => {
           const key = (s.label||'') + '|' + s.weight + '|' + s.reps;
-          if (!groups[key]) groups[key] = { label: s.label||'', sets: 0, reps: s.reps, weight: s.weight, unit: s.unit||'kg' };
+          // 資料庫存的 weight 已統一換算為 kg，unit 欄位僅做紀錄用
+          // prefill 時一律以 kg 顯示，避免重量被誤解為磅
+          if (!groups[key]) groups[key] = { label: s.label||'', sets: 0, reps: s.reps, weight: s.weight, unit: 'kg' };
           groups[key].sets++;
         });
         prefillSets = Object.values(groups);
@@ -1905,10 +1907,17 @@ async function editWorkoutRecord(id) {
     </div>`;
   }).join('');
 
-  openModal('編輯訓練記錄 — ' + record.recorded_date, `
-    <div style="font-size:12px;color:var(--text-dim);margin-bottom:12px">${record.day_label}</div>
+  openModal('編輯訓練記錄', `
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div style="font-size:13px;color:var(--text-dim);font-weight:700">${record.day_label}</div>
+      <div class="form-group" style="flex:1;margin:0">
+        <label>日期</label>
+        <input type="date" id="ew-date" value="${record.recorded_date}" style="font-size:13px;padding:6px 10px">
+      </div>
+    </div>
     <div id="ew-exercises">${exHtml}</div>
   `, async () => {
+    const newDate = document.getElementById('ew-date') ? document.getElementById('ew-date').value : record.recorded_date;
     const exercises = [];
     document.querySelectorAll('[id^="ew-ex-"]').forEach(block => {
       const nameEl = block.querySelector('.ew-name');
@@ -1936,11 +1945,11 @@ async function editWorkoutRecord(id) {
     if (!SUPABASE_CONFIGURED) {
       let rows = lsLoad('workout_records');
       const idx = rows.findIndex(r => r.id == id);
-      if (idx >= 0) rows[idx] = { ...rows[idx], exercises };
+      if (idx >= 0) rows[idx] = { ...rows[idx], recorded_date: newDate, exercises };
       lsSave('workout_records', rows);
       closeModal(); renderWorkoutHistory(); return;
     }
-    const { error } = await db.from('workout_records').update({ exercises }).eq('id', id).eq('user_id', currentUser.id);
+    const { error } = await db.from('workout_records').update({ recorded_date: newDate, exercises }).eq('id', id).eq('user_id', currentUser.id);
     if (!error) {
       setSyncStatus('synced', '✓ 已更新');
       closeModal();
