@@ -497,6 +497,26 @@
   .macro-f { background: rgba(244,114,182,0.15); color: #f472b6; border: 1px solid rgba(244,114,182,0.3); }
   .plan-total { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 
+
+  /* ── INBODY RECORDS ── */
+  .inbody-stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  .inbody-stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; }
+  .inbody-stat-val { font-size: 20px; font-weight: 700; font-family: 'Space Mono', monospace; }
+  .inbody-stat-label { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .inbody-stat-trend { font-size: 11px; margin-top: 3px; }
+  .trend-up { color: var(--danger); }
+  .trend-down { color: var(--accent); }
+  .inbody-history-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+  .inbody-history-date { font-size: 12px; color: var(--text-dim); font-family: 'Space Mono', monospace; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .inbody-history-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .inbody-hist-cell { text-align: center; }
+  .inbody-hist-val { font-size: 15px; font-weight: 700; font-family: 'Space Mono', monospace; }
+  .inbody-hist-label { font-size: 10px; color: var(--text-dim); }
+  @media(max-width: 480px) {
+    .inbody-stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .inbody-history-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
   /* ── NUTRIENT TARGETS ── */
   .nutrient-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
   .nutrient-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; }
@@ -613,6 +633,63 @@
       <div class="card">
         <div class="card-header"><div class="card-title">歷史紀錄</div><span id="body-count" class="badge badge-green">0 筆</span></div>
         <div class="history-list" id="body-history"></div>
+      </div>
+
+      <!-- InBody Section -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📊 InBody 記錄</div>
+          <button class="btn btn-secondary btn-sm" onclick="toggleInbodyForm()">➕ 新增</button>
+        </div>
+        <!-- Latest stats -->
+        <div class="inbody-stat-grid" id="inbody-stats" style="display:none">
+          <div class="inbody-stat">
+            <div class="inbody-stat-val" id="ib-muscle" style="color:#6ee7b7">—</div>
+            <div class="inbody-stat-label">骨骼肌 kg</div>
+            <div class="inbody-stat-trend" id="ib-muscle-trend"></div>
+          </div>
+          <div class="inbody-stat">
+            <div class="inbody-stat-val" id="ib-fatpct" style="color:#f472b6">—</div>
+            <div class="inbody-stat-label">體脂率 %</div>
+            <div class="inbody-stat-trend" id="ib-fatpct-trend"></div>
+          </div>
+          <div class="inbody-stat">
+            <div class="inbody-stat-val" id="ib-water" style="color:#38bdf8">—</div>
+            <div class="inbody-stat-label">身體水分 L</div>
+            <div class="inbody-stat-trend" id="ib-water-trend"></div>
+          </div>
+          <div class="inbody-stat">
+            <div class="inbody-stat-val" id="ib-score" style="color:#fb923c">—</div>
+            <div class="inbody-stat-label">InBody 評分</div>
+            <div class="inbody-stat-trend" id="ib-score-trend"></div>
+          </div>
+        </div>
+        <!-- Add form -->
+        <div id="inbody-form" style="display:none;margin-bottom:16px">
+          <div class="form-row">
+            <div class="form-group"><label>日期</label><input type="date" id="ib-date"></div>
+            <div class="form-group"><label>體重 (kg)</label><input type="number" step="0.1" id="ib-weight" placeholder="70.5"></div>
+            <div class="form-group"><label>骨骼肌 (kg)</label><input type="number" step="0.1" id="ib-muscle-in" placeholder="31.5"></div>
+            <div class="form-group"><label>體脂率 (%)</label><input type="number" step="0.1" id="ib-fatpct-in" placeholder="21.2"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>體脂量 (kg)</label><input type="number" step="0.1" id="ib-fatkg-in" placeholder="14.9"></div>
+            <div class="form-group"><label>身體水分 (L)</label><input type="number" step="0.1" id="ib-water-in" placeholder="40.7"></div>
+            <div class="form-group"><label>基礎代謝 (kcal)</label><input type="number" id="ib-bmr-in" placeholder="1570"></div>
+            <div class="form-group"><label>內臟脂肪等級</label><input type="number" id="ib-visceral-in" placeholder="6"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>腰圍 (cm)</label><input type="number" step="0.1" id="ib-waist-in" placeholder="85.0"></div>
+            <div class="form-group"><label>InBody 評分</label><input type="number" id="ib-score-in" placeholder="76"></div>
+            <div class="form-group"><label>備註</label><input type="text" id="ib-note-in" placeholder="選填"></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary" onclick="saveInbodyRecord()">💾 儲存</button>
+            <button class="btn btn-secondary" onclick="toggleInbodyForm()">取消</button>
+          </div>
+        </div>
+        <!-- History -->
+        <div id="inbody-history"><div class="empty-state"><div class="empty-icon">📊</div>尚無 InBody 記錄</div></div>
       </div>
     </div>
 
@@ -1029,6 +1106,7 @@ function showApp() {
   loadApiKey();
   loadSavedDietPlan();
   renderFoodLibrary();
+  renderInbodyHistory();
   // Restore any unsaved draft (iOS Safari fix)
   setTimeout(restoreDraftFromLocal, 500);
 }
@@ -1738,6 +1816,113 @@ setInterval(() => {
   if (currentUser) saveDraftToLocal();
 }, 10000);
 
+
+// ════════════════════════════════════════════
+// INBODY RECORDS
+// ════════════════════════════════════════════
+async function dbSelectInbody() {
+  if (!SUPABASE_CONFIGURED) return [];
+  const { data } = await db.from('inbody_records')
+    .select('*').eq('user_id', currentUser.id)
+    .order('recorded_date', { ascending: false });
+  return data || [];
+}
+
+function toggleInbodyForm() {
+  const form = document.getElementById('inbody-form');
+  const isHidden = form.style.display === 'none';
+  form.style.display = isHidden ? 'block' : 'none';
+  if (isHidden) document.getElementById('ib-date').value = today();
+}
+
+async function saveInbodyRecord() {
+  const date = document.getElementById('ib-date').value;
+  if (!date) { alert('請選擇日期'); return; }
+  const record = {
+    user_id: currentUser.id,
+    recorded_date: date,
+    weight: parseFloat(document.getElementById('ib-weight').value) || null,
+    muscle: parseFloat(document.getElementById('ib-muscle-in').value) || null,
+    fat_pct: parseFloat(document.getElementById('ib-fatpct-in').value) || null,
+    fat_mass: parseFloat(document.getElementById('ib-fatkg-in').value) || null,
+    water: parseFloat(document.getElementById('ib-water-in').value) || null,
+    bmr: parseInt(document.getElementById('ib-bmr-in').value) || null,
+    visceral: parseInt(document.getElementById('ib-visceral-in').value) || null,
+    waist_cm: parseFloat(document.getElementById('ib-waist-in').value) || null,
+    inbody_score: parseInt(document.getElementById('ib-score-in').value) || null,
+    note: document.getElementById('ib-note-in').value || null,
+  };
+  const { error } = await db.from('inbody_records').upsert(record, { onConflict: 'user_id,recorded_date' });
+  if (!error) {
+    setSyncStatus('synced', '✓ InBody 記錄已儲存');
+    toggleInbodyForm();
+    ['ib-weight','ib-muscle-in','ib-fatpct-in','ib-fatkg-in','ib-water-in','ib-bmr-in','ib-visceral-in','ib-waist-in','ib-score-in','ib-note-in'].forEach(id => document.getElementById(id).value = '');
+    renderInbodyHistory();
+  } else {
+    alert('儲存失敗：' + (error.message || JSON.stringify(error)));
+  }
+}
+
+async function deleteInbodyRecord(date) {
+  if (!confirm('確定刪除此筆 InBody 記錄？')) return;
+  const { error } = await db.from('inbody_records').delete().eq('user_id', currentUser.id).eq('recorded_date', date);
+  if (!error) { setSyncStatus('synced', '✓ 已刪除'); renderInbodyHistory(); }
+}
+
+async function renderInbodyHistory() {
+  const records = await dbSelectInbody();
+  const statsEl = document.getElementById('inbody-stats');
+  const historyEl = document.getElementById('inbody-history');
+
+  if (!records.length) {
+    statsEl.style.display = 'none';
+    historyEl.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div>尚無 InBody 記錄<br><span style="font-size:12px">點「➕ 新增」輸入 InBody 數據</span></div>';
+    return;
+  }
+
+  // Show latest stats with trend vs previous
+  statsEl.style.display = 'grid';
+  const latest = records[0];
+  const prev = records[1];
+
+  function trendHtml(cur, prv, higherBad = false) {
+    if (!cur || !prv) return '';
+    const diff = (cur - prv).toFixed(1);
+    const isUp = diff > 0;
+    const isBad = higherBad ? isUp : !isUp;
+    return `<span class="${isBad ? 'trend-up' : 'trend-down'}">${isUp ? '▲' : '▼'}${Math.abs(diff)}</span>`;
+  }
+
+  document.getElementById('ib-muscle').textContent = latest.muscle ?? '—';
+  document.getElementById('ib-muscle-trend').innerHTML = trendHtml(latest.muscle, prev?.muscle, false);
+  document.getElementById('ib-fatpct').textContent = latest.fat_pct ? latest.fat_pct + '%' : '—';
+  document.getElementById('ib-fatpct-trend').innerHTML = trendHtml(latest.fat_pct, prev?.fat_pct, true);
+  document.getElementById('ib-water').textContent = latest.water ?? '—';
+  document.getElementById('ib-water-trend').innerHTML = trendHtml(latest.water, prev?.water, false);
+  document.getElementById('ib-score').textContent = latest.inbody_score ?? '—';
+  document.getElementById('ib-score-trend').innerHTML = trendHtml(latest.inbody_score, prev?.inbody_score, false);
+
+  // History list
+  historyEl.innerHTML = records.map(r => `
+    <div class="inbody-history-item">
+      <div class="inbody-history-date">
+        <span>${r.recorded_date} ${r.inbody_score ? `<span class="badge badge-blue">${r.inbody_score}分</span>` : ''}</span>
+        <button class="btn btn-danger btn-sm" onclick="deleteInbodyRecord('${r.recorded_date}')">刪除</button>
+      </div>
+      <div class="inbody-history-grid">
+        <div class="inbody-hist-cell"><div class="inbody-hist-val">${r.weight ?? '—'}</div><div class="inbody-hist-label">體重 kg</div></div>
+        <div class="inbody-hist-cell"><div class="inbody-hist-val" style="color:#6ee7b7">${r.muscle ?? '—'}</div><div class="inbody-hist-label">骨骼肌 kg</div></div>
+        <div class="inbody-hist-cell"><div class="inbody-hist-val" style="color:#f472b6">${r.fat_pct ? r.fat_pct + '%' : '—'}</div><div class="inbody-hist-label">體脂率</div></div>
+        <div class="inbody-hist-cell"><div class="inbody-hist-val" style="color:#38bdf8">${r.water ?? '—'}</div><div class="inbody-hist-label">水分 L</div></div>
+        ${r.bmr ? `<div class="inbody-hist-cell"><div class="inbody-hist-val">${r.bmr}</div><div class="inbody-hist-label">基代 kcal</div></div>` : ''}
+        ${r.visceral ? `<div class="inbody-hist-cell"><div class="inbody-hist-val">${r.visceral}</div><div class="inbody-hist-label">內臟脂肪</div></div>` : ''}
+        ${r.waist_cm ? `<div class="inbody-hist-cell"><div class="inbody-hist-val">${r.waist_cm}</div><div class="inbody-hist-label">腰圍 cm</div></div>` : ''}
+        ${r.fat_mass ? `<div class="inbody-hist-cell"><div class="inbody-hist-val">${r.fat_mass}</div><div class="inbody-hist-label">體脂量 kg</div></div>` : ''}
+      </div>
+      ${r.note ? `<div style="margin-top:6px;font-size:12px;color:var(--text-dim)">${r.note}</div>` : ''}
+    </div>`).join('');
+}
+
 // ════════════════════════════════════════════
 // COMPACT SETS DISPLAY
 // ════════════════════════════════════════════
@@ -2117,6 +2302,7 @@ function removeTyping() {
 async function buildDataContext() {
   const bodyRecs = await dbSelect('body_records', 'recorded_date', true);
   const workoutRecs = await dbSelect('workout_records', 'recorded_date', false);
+  const inbodyRecs = await dbSelectInbody();
 
   // 7天體重/腰圍
   const recentBody = bodyRecs.slice(-7);
@@ -2169,7 +2355,21 @@ async function buildDataContext() {
   const latestWaist = recentBody.filter(r=>r.waist_cm).pop()?.waist_cm || '未知';
   const weightTrend = recentBody.map(r => `${r.recorded_date} ${r.morning_weight||'-'}kg${r.waist_cm?' 腰'+r.waist_cm+'cm':''}`).join('、') || '尚無記錄';
 
-  return `【基本資料】目標:${goal} 身高:${height||'未填'}cm 年齡:${age||'未填'}歲 最新體重:${latestWeight}kg 腰圍:${latestWaist}cm
+  // InBody summary
+  const inbodySummary = inbodyRecs.slice(0, 5).map(r =>
+    `${r.recorded_date}: 體重${r.weight}kg 骨骼肌${r.muscle}kg 體脂${r.fat_pct}% 水分${r.water}L${r.inbody_score ? ` 評分${r.inbody_score}` : ''}`
+  ).join(' | ') || '尚無記錄';
+
+  return `【基本資料】
+男性 / 24歲 / 身高171cm / 目標：增肌減脂
+168斷食（12:00–19:00）一天兩餐，目前蛋白質約150g/天
+補充品：魚油、維他命C×2、維他命B（每日）
+訓練：每週5次重量訓練＋每週2–3次有氧
+作息：00:00–08:00睡眠
+健康需求：①保護肌肉防流失 ②夜尿/睡眠改善 ③預防痛風(家族史) ④提升性功能 ⑤皮膚改善 ⑥防脫髮
+體脂目標：2026/04/25前達到16–17%
+
+【InBody 歷史趨勢】${inbodySummary}
 
 【近7天體重趨勢】${weightTrend}
 
@@ -2177,7 +2377,7 @@ async function buildDataContext() {
 
 【訓練重量（最近2次比較）】${workoutSummary}
 
-${inbodyImages.length > 0 ? `【InBody】已上傳${inbodyImages.length}張` : ''}`;
+${inbodyImages.length > 0 ? `【本次上傳InBody】已上傳${inbodyImages.length}張` : ''}`;
 }
 
 
@@ -2260,6 +2460,31 @@ ${dataCtx}
     chatHistory.push({ role: 'assistant', content: reply });
     window._lastAIResponse = reply;
     document.getElementById('ai-apply-section').style.display = 'block';
+
+    // Auto-apply if triggered by next week plan button
+    if (window._autoApplyAfterReply) {
+      window._autoApplyAfterReply = false;
+      // Try to extract TARGETS from reply directly first
+      const targetsMatch = reply.match(/TARGETS:\s*(\{[^}]+\})/);
+      if (targetsMatch) {
+        try {
+          const targets = JSON.parse(targetsMatch[1]);
+          if (targets.cal && targets.protein) {
+            localStorage.setItem('ht_nutrient_targets', JSON.stringify(targets));
+            localStorage.setItem('ht_diet_plan_text', reply.replace(/TARGETS:\{[^}]+\}/, '').trim().slice(0, 2000));
+            appendChatMsg('ai', `✅ 營養目標已自動套用到飲食記錄頁！\n熱量 ${targets.cal}kcal｜蛋白質 ${targets.protein}g｜碳水 ${targets.carb}g｜脂肪 ${targets.fat}g`);
+            // Update nutrition page targets
+            const planCard = document.getElementById('ai-diet-plan-card');
+            const planText = document.getElementById('ai-diet-plan-text');
+            if (planText) planText.textContent = reply.slice(0, 2000);
+            if (planCard) planCard.style.display = 'block';
+            return;
+          }
+        } catch(e) {}
+      }
+      // Fallback: use Haiku to extract targets
+      applyAIDietPlan();
+    }
   } catch(e) {
     removeTyping();
     appendChatMsg('ai', `❌ 錯誤：${e.message}
@@ -2285,19 +2510,23 @@ async function getRecentData() {
 
 
 function promptNextWeekPlan() {
+  window._autoApplyAfterReply = true; // flag to auto-apply after AI replies
   quickPrompt(`請根據我目前所有的追蹤數據做完整分析，並幫我規劃下週的飲食和營養目標：
 
 【分析要求】
 1. 比較我近期的體重趨勢、體脂變化，評估目前進度
 2. 分析我的卡路里攝取是否足夠支撐訓練和恢復
-3. 評估各訓練動作的重量進步或退步趨勢
+3. 評估各訓練動作的重量進步或退步趨勢（最大重量與訓練容量）
 4. 結合所有數據，判斷我能否在一個月後達到體脂 17%
 
 【請給出】
 1. 下週每日具體熱量目標和三大營養素數字（kcal、蛋白質g、碳水g、脂肪g）
 2. 訓練日和休息日各自的飲食安排
 3. 需要調整的地方和原因
-4. 預測一個月後的體脂率，以及需要做哪些改變才能達到 17%`);
+4. 預測一個月後的體脂率，以及需要做哪些改變才能達到 17%
+
+最後請在回覆末尾單獨一行輸出JSON格式的目標數字，例如：
+TARGETS:{"cal":1900,"protein":155,"carb":200,"fat":55}`);
 }
 
 // ════════════════════════════════════════════
