@@ -2196,9 +2196,42 @@ async function buildDataContext() {
     if (t.cal > 0) nutSummary.push(`${ds}: ${Math.round(t.cal)}kcal 蛋白${Math.round(t.protein)}g 碳水${Math.round(t.carb)}g 脂肪${Math.round(t.fat)}g`);
   }
 
-  const weightTrend = recentBody.map(r => `${r.recorded_date} 起床:${r.morning_weight||'-'}kg 睡前:${r.evening_weight||'-'}kg 腰圍:${r.waist_cm||'-'}cm`).join('\n') || '尚無記錄';
-  const workoutTrend = recentWorkout.map(r => {
-    const exStr = (r.exercises||[]).map(e=>`${e.name}(${compactSets(e.sets)})`).join(', ');
+  // ── 訓練容量趨勢：全部記錄按動作分組，由舊到新 ──
+  const allWorkoutSorted = [...workoutRecs].sort((a,b) => a.recorded_date.localeCompare(b.recorded_date));
+
+  // 1. 按動作名稱建立容量歷史
+  const exVolumeMap = {};  // { exName: [{date, volume, sets_summary}] }
+  allWorkoutSorted.forEach(r => {
+    (r.exercises||[]).forEach(ex => {
+      if (!exVolumeMap[ex.name]) exVolumeMap[ex.name] = [];
+      const volume = (ex.sets||[]).reduce((sum, s) => sum + (s.reps||0) * (s.weight||0), 0);
+      if (volume > 0) {
+        // 同日同動作只保留最後一筆（避免重複）
+        const last = exVolumeMap[ex.name].slice(-1)[0];
+        if (last && last.date === r.recorded_date) {
+          last.volume = Math.round(volume);
+        } else {
+          exVolumeMap[ex.name].push({ date: r.recorded_date, volume: Math.round(volume) });
+        }
+      }
+    });
+  });
+
+  // 2. 只保留有 2 筆以上的動作，並計算趨勢箭頭
+  const exTrendLines = Object.entries(exVolumeMap)
+    .filter(([, pts]) => pts.length >= 2)
+    .map(([name, pts]) => {
+      const latest = pts[pts.length - 1].volume;
+      const prev   = pts[pts.length - 2].volume;
+      const diff   = latest - prev;
+      const arrow  = diff > 0 ? `↑+${diff}` : diff < 0 ? `↓${diff}` : '→持平';
+      const history = pts.map(p => `${p.date.slice(5)}:${p.volume}kg`).join(' → ');
+      return `  ${name}：${history} (${arrow})`;
+    });
+
+  // 3. 近 14 筆的訓練日誌（保留原始格式供 AI 看細節）
+  const recentWorkoutLog = recentWorkout.map(r => {
+    const exStr = (r.exercises||[]).map(e => `${e.name}(${compactSets(e.sets)})`).join(', ');
     const cardioStr = r.cardio ? ` | 有氧:${r.cardio.type} ${r.cardio.duration}分鐘 ${r.cardio.calories}kcal` : '';
     return `${r.recorded_date} [${r.day_label}]: ${exStr}${cardioStr}`;
   }).join('\n') || '尚無記錄';
@@ -2219,9 +2252,12 @@ ${weightTrend}
 【近14天飲食記錄】
 ${nutSummary.join('\n') || '尚無記錄'}
 
-【近14筆訓練記錄】
+【各動作訓練容量趨勢（總容量=組數×次數×重量，由舊至新）】
+${exTrendLines.length ? exTrendLines.join('\n') : '尚無足夠記錄（需同一動作至少2次）'}
+
+【近14筆訓練日誌（細節）】
 訓練分化：胸+三頭 / 背+二頭 / 腿+腹肌 / 肩+小臂 / 休息 / 上半身 / 有氧
-${workoutTrend}
+${recentWorkoutLog}
 
 ${getInbodyContext()}`;
 }
