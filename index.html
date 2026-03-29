@@ -867,15 +867,62 @@
         </div>
       </div>
 
-      <!-- InBody Upload -->
+      <!-- InBody 數據輸入（多筆歷史） -->
       <div class="card">
         <div class="card-header">
-          <div class="card-title">InBody 報告（選填，可多張）</div>
-          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('inbody-input').click()">➕ 上傳</button>
+          <div class="card-title">InBody 歷史紀錄</div>
+          <span id="inbody-count" class="badge badge-blue">0 筆</span>
         </div>
-        <div class="inbody-images" id="inbody-images"></div>
-        <div id="upload-area" style="font-size:12px;color:var(--text-muted);text-align:center;padding:8px 0;cursor:pointer" onclick="document.getElementById('inbody-input').click()">點擊上傳 InBody 照片（不上傳也可以直接對話分析）</div>
-        <input type="file" id="inbody-input" accept="image/*" multiple style="display:none" onchange="handleInbodyUpload(this)">
+
+        <!-- 歷史列表 -->
+        <div id="inbody-history-list" style="margin-bottom:14px"></div>
+
+        <!-- 新增表單 -->
+        <div style="border-top:1px solid var(--border);padding-top:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--text-dim);letter-spacing:0.5px;margin-bottom:10px;text-transform:uppercase">新增一筆</div>
+          <div class="form-row" style="margin-bottom:8px">
+            <div class="form-group">
+              <label>測量日期</label>
+              <input type="date" id="ib-date">
+            </div>
+            <div class="form-group">
+              <label>體重 (kg)</label>
+              <input type="number" step="0.1" id="ib-weight" placeholder="75.0">
+            </div>
+            <div class="form-group">
+              <label>骨骼肌重 (kg)</label>
+              <input type="number" step="0.1" id="ib-muscle" placeholder="35.0">
+            </div>
+            <div class="form-group">
+              <label>體脂肪重 (kg)</label>
+              <input type="number" step="0.1" id="ib-fat-mass" placeholder="15.0">
+            </div>
+          </div>
+          <div class="form-row" style="margin-bottom:10px">
+            <div class="form-group">
+              <label>體脂率 (%)</label>
+              <input type="number" step="0.1" id="ib-fat-pct" placeholder="20.0">
+            </div>
+            <div class="form-group">
+              <label>BMI</label>
+              <input type="number" step="0.1" id="ib-bmi" placeholder="22.5">
+            </div>
+            <div class="form-group">
+              <label>基礎代謝率 BMR (kcal)</label>
+              <input type="number" id="ib-bmr" placeholder="1750">
+            </div>
+            <div class="form-group">
+              <label>內臟脂肪等級</label>
+              <input type="number" step="1" id="ib-visceral" placeholder="5">
+            </div>
+            <div class="form-group">
+              <label>身體總水重 (L)</label>
+              <input type="number" step="0.1" id="ib-water" placeholder="35.0">
+            </div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveInbodyData()">➕ 新增紀錄</button>
+        </div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:10px">所有歷史數據會自動帶入 AI 對話，AI 可分析體組成變化趨勢</div>
       </div>
 
       <!-- Profile -->
@@ -1040,12 +1087,14 @@ function showApp() {
   document.getElementById('body-date').value = today();
   document.getElementById('nutrition-date').value = today();
   document.getElementById('workout-date').value = today();
+  document.getElementById('ib-date').value = today();
   selectWorkoutDay(0, document.querySelector('.day-btn'));
   renderBodyHistory();
   renderNutritionDay();
   renderWorkoutHistory();
   loadApiKey();
   loadSavedDietPlan();
+  loadInbodyData();
   renderFoodLibrary();
   setTimeout(restoreDraftFromLocal, 500);
 }
@@ -2174,7 +2223,7 @@ ${nutSummary.join('\n') || '尚無記錄'}
 訓練分化：胸+三頭 / 背+二頭 / 腿+腹肌 / 肩+小臂 / 休息 / 上半身 / 有氧
 ${workoutTrend}
 
-${inbodyImages.length > 0 ? `【InBody 報告】已上傳 ${inbodyImages.length} 張，請一併分析` : '【InBody 報告】未上傳（請根據趨勢數據分析）'}`;
+${getInbodyContext()}`;
 }
 
 async function sendChatMessage() {
@@ -2208,22 +2257,7 @@ ${dataCtx}
 
   chatHistory.push({ role: 'user', content: text });
 
-  let userContent;
-  if (inbodyImages.length > 0 && chatHistory.length === 1) {
-    userContent = [];
-    inbodyImages.forEach((img, i) => {
-      userContent.push({ type:'text', text:`[InBody 報告 ${i+1}]` });
-      userContent.push({ type:'image', source:{ type:'base64', media_type:img.mediaType, data:img.base64 } });
-    });
-    userContent.push({ type:'text', text });
-  } else {
-    userContent = text;
-  }
-
-  const msgs = chatHistory.slice(-10).map((m, i) => ({
-    role: m.role,
-    content: i === chatHistory.length - 1 && userContent !== text ? userContent : m.content
-  }));
+  const msgs = chatHistory.slice(-10).map(m => ({ role: m.role, content: m.content }));
 
   try {
     const resp = await fetch('https://weathered-term-59c1.tt424.workers.dev', {
@@ -2309,6 +2343,124 @@ ${text.slice(0,2000)}` }]
   } catch(e) {
     alert('套用失敗：' + e.message);
   }
+}
+
+// ════════════════════════════════════════════
+// INBODY DATA — 多筆歷史記錄 (localStorage)
+// ════════════════════════════════════════════
+function saveInbodyData() {
+  const entry = {
+    date:     document.getElementById('ib-date').value || today(),
+    weight:   document.getElementById('ib-weight').value,
+    muscle:   document.getElementById('ib-muscle').value,
+    fatMass:  document.getElementById('ib-fat-mass').value,
+    fatPct:   document.getElementById('ib-fat-pct').value,
+    bmi:      document.getElementById('ib-bmi').value,
+    bmr:      document.getElementById('ib-bmr').value,
+    visceral: document.getElementById('ib-visceral').value,
+    water:    document.getElementById('ib-water').value,
+  };
+  const hasAny = Object.entries(entry).some(([k,v]) => k !== 'date' && v);
+  if (!hasAny) { alert('請至少填入一項數據'); return; }
+
+  const records = loadInbodyRecords();
+  // 同日期則覆蓋，不同日期則新增
+  const idx = records.findIndex(r => r.date === entry.date);
+  if (idx >= 0) { records[idx] = entry; } else { records.push(entry); }
+  // 按日期排序（新 → 舊）
+  records.sort((a,b) => b.date.localeCompare(a.date));
+  localStorage.setItem('ht_inbody_history', JSON.stringify(records));
+
+  // 清空表單
+  ['ib-weight','ib-muscle','ib-fat-mass','ib-fat-pct','ib-bmi','ib-bmr','ib-visceral','ib-water']
+    .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('ib-date').value = today();
+
+  renderInbodyHistory();
+  setSyncStatus('synced', `✓ InBody ${entry.date} 已儲存`);
+}
+
+function loadInbodyRecords() {
+  try { return JSON.parse(localStorage.getItem('ht_inbody_history') || '[]'); }
+  catch(e) { return []; }
+}
+
+function deleteInbodyRecord(date) {
+  if (!confirm(`確定刪除 ${date} 的 InBody 紀錄？`)) return;
+  const records = loadInbodyRecords().filter(r => r.date !== date);
+  localStorage.setItem('ht_inbody_history', JSON.stringify(records));
+  renderInbodyHistory();
+}
+
+function renderInbodyHistory() {
+  const records = loadInbodyRecords();
+  const countEl = document.getElementById('inbody-count');
+  if (countEl) countEl.textContent = records.length + ' 筆';
+  const container = document.getElementById('inbody-history-list');
+  if (!container) return;
+  if (!records.length) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:4px 0">尚無 InBody 記錄，請在下方新增</div>';
+    return;
+  }
+  container.innerHTML = records.map(r => {
+    const fields = [
+      r.weight   ? `體重 ${r.weight}kg`     : '',
+      r.muscle   ? `骨骼肌 ${r.muscle}kg`   : '',
+      r.fatPct   ? `體脂 ${r.fatPct}%`      : '',
+      r.fatMass  ? `脂肪 ${r.fatMass}kg`    : '',
+      r.bmr      ? `BMR ${r.bmr}kcal`       : '',
+      r.bmi      ? `BMI ${r.bmi}`           : '',
+      r.visceral ? `內臟脂肪 lv.${r.visceral}` : '',
+      r.water    ? `水重 ${r.water}L`        : '',
+    ].filter(Boolean);
+    return `<div class="history-item" style="margin-bottom:6px">
+      <div>
+        <div class="history-date">${r.date}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:5px">
+          ${fields.map(f => `<span class="badge badge-blue" style="font-size:10px">${f}</span>`).join('')}
+        </div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deleteInbodyRecord('${r.date}')">刪除</button>
+    </div>`;
+  }).join('');
+}
+
+function loadInbodyData() {
+  // 舊版單筆格式遷移（ht_inbody → ht_inbody_history）
+  const oldRaw = localStorage.getItem('ht_inbody');
+  if (oldRaw) {
+    try {
+      const old = JSON.parse(oldRaw);
+      const existing = loadInbodyRecords();
+      if (old.date && !existing.find(r => r.date === old.date)) {
+        existing.push(old);
+        existing.sort((a,b) => b.date.localeCompare(a.date));
+        localStorage.setItem('ht_inbody_history', JSON.stringify(existing));
+      }
+      localStorage.removeItem('ht_inbody');
+    } catch(e) {}
+  }
+  renderInbodyHistory();
+}
+
+function getInbodyContext() {
+  const records = loadInbodyRecords();
+  if (!records.length) return '【InBody 歷史】未填入';
+  // 按日期由舊到新排列，讓 AI 看到趨勢
+  const sorted = [...records].sort((a,b) => a.date.localeCompare(b.date));
+  const lines = sorted.map(r => {
+    const parts = [r.date];
+    if (r.weight)   parts.push(`體重${r.weight}kg`);
+    if (r.muscle)   parts.push(`骨骼肌${r.muscle}kg`);
+    if (r.fatMass)  parts.push(`體脂肪${r.fatMass}kg`);
+    if (r.fatPct)   parts.push(`體脂率${r.fatPct}%`);
+    if (r.bmi)      parts.push(`BMI ${r.bmi}`);
+    if (r.bmr)      parts.push(`BMR ${r.bmr}kcal`);
+    if (r.visceral) parts.push(`內臟脂肪lv.${r.visceral}`);
+    if (r.water)    parts.push(`水重${r.water}L`);
+    return parts.join(' | ');
+  });
+  return `【InBody 歷史（${records.length}筆，由舊至新）】\n` + lines.join('\n');
 }
 
 function loadSavedDietPlan() {
