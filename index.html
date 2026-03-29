@@ -2327,8 +2327,8 @@ async function renderMiniWorkoutChart(records) {
   [...records].sort((a,b) => a.recorded_date.localeCompare(b.recorded_date)).forEach(r => {
     (r.exercises||[]).forEach(ex => {
       if (!exerciseMap[ex.name]) exerciseMap[ex.name] = [];
-      const maxW = Math.max(...(ex.sets||[]).map(s => s.weight||0));
-      if (maxW > 0) exerciseMap[ex.name].push({ date: r.recorded_date.slice(5), weight: maxW });
+      const volume = (ex.sets||[]).reduce((sum, s) => sum + (s.reps||0) * (s.weight||0), 0);
+      if (volume > 0) exerciseMap[ex.name].push({ date: r.recorded_date.slice(5), volume: Math.round(volume) });
     });
   });
   const exNames = Object.keys(exerciseMap).filter(n => exerciseMap[n].length > 1);
@@ -2356,10 +2356,12 @@ function renderMiniExChart(name, map) {
   const pts = map[name] || [];
   chartInstances['mini-workout'] = new Chart(document.getElementById('mini-workout'), {
     type: 'line',
-    data: { labels: pts.map(p => p.date), datasets: [{ data: pts.map(p => p.weight), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', tension: 0.3, pointRadius: 3, borderWidth: 1.5 }] },
+    data: { labels: pts.map(p => p.date), datasets: [{ data: pts.map(p => p.volume), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', tension: 0.3, pointRadius: 3, borderWidth: 1.5 }] },
     options: {
       responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `容量 ${ctx.parsed.y} kg` } }
+      },
       scales: {
         x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(42,47,62,0.5)' } },
         y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: 'rgba(42,47,62,0.5)' } }
@@ -2473,8 +2475,8 @@ async function renderAllCharts() {
   workoutRecs.forEach(r => {
     (r.exercises||[]).forEach(ex => {
       if (!exerciseMap[ex.name]) exerciseMap[ex.name] = [];
-      const maxW = Math.max(...(ex.sets||[]).map(s => s.weight||0));
-      if (maxW > 0) exerciseMap[ex.name].push({ date: r.recorded_date.slice(5), weight: maxW });
+      const volume = (ex.sets||[]).reduce((sum, s) => sum + (s.reps||0) * (s.weight||0), 0);
+      if (volume > 0) exerciseMap[ex.name].push({ date: r.recorded_date.slice(5), volume: Math.round(volume) });
     });
   });
 
@@ -2507,7 +2509,7 @@ function renderExerciseChart(name, map) {
     type: 'line',
     data: {
       labels: pts.map(p => p.date),
-      datasets: [{ label: name + ' 最大重量 (kg)', data: pts.map(p => p.weight), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', tension: 0.3, pointRadius: 4 }]
+      datasets: [{ label: name + ' 總訓練容量 (kg)', data: pts.map(p => p.volume), borderColor: '#6366f1', backgroundColor: 'rgba(99,102,241,0.1)', tension: 0.3, pointRadius: 4 }]
     },
     options: { ...CHART_DEFAULTS }
   });
