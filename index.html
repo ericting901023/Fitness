@@ -436,13 +436,13 @@
   }
   @media (max-width: 520px) {
     .set-row, .ew-set {
-      grid-template-columns: 70px 44px 44px 72px 50px;
+      grid-template-columns: 1fr 44px 44px 72px 50px;
       gap: 4px;
       position: relative;
       padding-right: 36px;
     }
     .set-row-header {
-      grid-template-columns: 70px 44px 44px 72px 50px;
+      grid-template-columns: 1fr 44px 44px 72px 50px;
       gap: 4px;
       padding-right: 36px;
     }
@@ -1644,6 +1644,23 @@ async function renderWorkoutHistory() {
 // ════════════════════════════════════════════
 function saveDraftToLocal() {
   try {
+    // Save workout exercise inputs
+    const workoutExercises = [];
+    document.querySelectorAll('.exercise-block').forEach(block => {
+      const name = block.querySelector('.ex-name')?.value || '';
+      const sets = [];
+      block.querySelectorAll('.set-row').forEach(row => {
+        sets.push({
+          label: row.querySelector('.sr-label')?.value || '',
+          sets: row.querySelector('.sr-sets')?.value || '',
+          reps: row.querySelector('.sr-reps')?.value || '',
+          weight: row.querySelector('.sr-weight')?.value || '',
+          unit: row.querySelector('.sr-unit')?.value || 'kg',
+        });
+      });
+      if (name) workoutExercises.push({ name, sets });
+    });
+
     const draft = {
       bodyDate: document.getElementById('body-date')?.value,
       bodyMorning: document.getElementById('body-morning')?.value,
@@ -1653,6 +1670,10 @@ function saveDraftToLocal() {
       nutritionDate: document.getElementById('nutrition-date')?.value,
       workoutDate: document.getElementById('workout-date')?.value,
       workoutDay: currentWorkoutDay,
+      workoutExercises: workoutExercises.length ? workoutExercises : null,
+      cardioType: document.getElementById('cardio-type')?.value,
+      cardioDuration: document.getElementById('cardio-duration')?.value,
+      cardioCalories: document.getElementById('cardio-calories')?.value,
     };
     localStorage.setItem('ht_draft', JSON.stringify(draft));
   } catch(e) {}
@@ -1671,6 +1692,28 @@ function restoreDraftFromLocal() {
       renderNutritionDay();
     }
     if (d.workoutDate) document.getElementById('workout-date').value = d.workoutDate;
+
+    // Restore workout exercises if same day
+    if (d.workoutExercises && d.workoutExercises.length && d.workoutDay === currentWorkoutDay) {
+      const container = document.getElementById('exercise-inputs');
+      // Only restore if user hasn't already filled in weights
+      const hasWeights = Array.from(container.querySelectorAll('.sr-weight')).some(el => el.value);
+      if (!hasWeights) {
+        exerciseCount = 0;
+        container.innerHTML = '';
+        d.workoutExercises.forEach(ex => {
+          const prefillSets = ex.sets.map(s => ({
+            label: s.label, sets: parseInt(s.sets)||1,
+            reps: parseInt(s.reps)||10, weight: s.weight, unit: s.unit||'kg'
+          }));
+          addExerciseInput(ex.name, prefillSets);
+        });
+        // Also restore cardio
+        if (d.cardioType) document.getElementById('cardio-type').value = d.cardioType;
+        if (d.cardioDuration) document.getElementById('cardio-duration').value = d.cardioDuration;
+        if (d.cardioCalories) document.getElementById('cardio-calories').value = d.cardioCalories;
+      }
+    }
   } catch(e) {}
 }
 
