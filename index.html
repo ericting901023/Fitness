@@ -434,19 +434,30 @@
     justify-content: center;
     font-size: 13px;
   }
-  @media (max-width: 500px) {
+  @media (max-width: 520px) {
     .set-row, .ew-set {
-      grid-template-columns: 80px 42px 42px 70px 48px 28px;
+      grid-template-columns: 1fr 44px 44px 72px 50px;
       gap: 4px;
+      position: relative;
+      padding-right: 36px;
     }
     .set-row-header {
-      grid-template-columns: 80px 42px 42px 70px 48px 28px;
+      grid-template-columns: 1fr 44px 44px 72px 50px;
       gap: 4px;
+      padding-right: 36px;
     }
-    .set-row input, .ew-set input { font-size: 12px; padding: 7px 2px; }
+    .set-row input, .ew-set input { font-size: 12px; padding: 7px 3px; }
     .set-row input.sr-label, .ew-set input.ew-label { font-size: 11px; padding: 7px 4px; }
     .set-row select, .ew-set select { font-size: 10px; padding: 7px 1px; }
-    .set-row .btn-danger, .ew-set .btn-danger { width: 28px; height: 28px; min-width: 28px; }
+    .set-row .btn-danger, .ew-set .btn-danger {
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 30px;
+      height: 30px;
+      min-width: 30px;
+    }
   }
 
   /* ── AI CHAT UI ── */
