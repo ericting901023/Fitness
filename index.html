@@ -391,52 +391,62 @@
   /* ── SET ROW GRID ── */
   .set-row, .ew-set {
     display: grid;
-    grid-template-columns: 1fr 44px 44px 70px 50px 28px;
-    gap: 4px;
+    grid-template-columns: 150px 56px 56px 90px 62px 32px;
+    gap: 6px;
     align-items: center;
     margin-bottom: 6px;
-    min-width: 0;
-    overflow: hidden;
   }
   .set-row-header {
     display: grid;
-    grid-template-columns: 1fr 44px 44px 70px 50px 28px;
-    gap: 4px;
+    grid-template-columns: 150px 56px 56px 90px 62px 32px;
+    gap: 6px;
     margin-bottom: 4px;
     font-size: 10px;
     color: var(--text-dim);
     padding: 0 2px;
-    min-width: 0;
-  }
-  .set-row > *, .ew-set > * {
-    min-width: 0;
-    box-sizing: border-box;
   }
   .set-row input, .ew-set input {
     width: 100%;
-    padding: 8px 3px;
-    font-size: 12px;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 8px 4px;
+    font-size: 13px;
     text-align: center;
   }
   .set-row input.sr-label, .ew-set input.ew-label {
     text-align: left;
-    padding: 8px 6px;
+    padding: 8px 8px;
+    font-size: 13px;
   }
   .set-row select, .ew-set select {
     width: 100%;
-    font-size: 11px;
-    padding: 8px 1px;
+    min-width: 0;
+    box-sizing: border-box;
+    font-size: 12px;
+    padding: 8px 2px;
     text-align: center;
   }
   .set-row .btn-danger, .ew-set .btn-danger {
-    width: 28px !important;
-    height: 28px !important;
-    min-width: 28px !important;
-    max-width: 28px !important;
-    padding: 0 !important;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    padding: 0;
     justify-content: center;
-    font-size: 12px;
-    flex-shrink: 0;
+    font-size: 13px;
+  }
+  @media (max-width: 500px) {
+    .set-row, .ew-set {
+      grid-template-columns: 80px 42px 42px 70px 48px 28px;
+      gap: 4px;
+    }
+    .set-row-header {
+      grid-template-columns: 80px 42px 42px 70px 48px 28px;
+      gap: 4px;
+    }
+    .set-row input, .ew-set input { font-size: 12px; padding: 7px 2px; }
+    .set-row input.sr-label, .ew-set input.ew-label { font-size: 11px; padding: 7px 4px; }
+    .set-row select, .ew-set select { font-size: 10px; padding: 7px 1px; }
+    .set-row .btn-danger, .ew-set .btn-danger { width: 28px; height: 28px; min-width: 28px; }
   }
 
   /* ── AI CHAT UI ── */
