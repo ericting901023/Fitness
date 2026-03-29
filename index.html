@@ -2168,9 +2168,15 @@ function showTyping() {
   div.innerHTML = `<div class="chat-avatar ai">🤖</div><div class="chat-typing"><span></span><span></span><span></span></div>`;
   messages.appendChild(div);
   messages.scrollTop = messages.scrollHeight;
+  // 8秒後如果還沒回覆，更新提示文字
+  window._typingTimer = setTimeout(() => {
+    const el = document.getElementById('typing-indicator');
+    if (el) el.innerHTML = `<div class="chat-avatar ai">🤖</div><div class="chat-bubble" style="color:var(--text-dim);font-size:12px">分析中，內容較多請稍候（通常需要 15–30 秒）...</div>`;
+  }, 8000);
 }
 
 function removeTyping() {
+  clearTimeout(window._typingTimer);
   const el = document.getElementById('typing-indicator');
   if (el) el.remove();
 }
@@ -2315,7 +2321,7 @@ ${dataCtx}
       headers: { 'Content-Type':'application/json', 'x-api-key':apiKey, 'anthropic-version':'2023-06-01' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2000,
+        max_tokens: 4000,
         system: systemPrompt,
         messages: msgs
       })
