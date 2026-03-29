@@ -2532,7 +2532,7 @@ ${dataCtx}`;
       if (targetsMatch) {
         const targets = { cal: +targetsMatch[1], protein: +targetsMatch[2], carb: +targetsMatch[3], fat: +targetsMatch[4] };
         localStorage.setItem('ht_nutrient_targets', JSON.stringify(targets));
-        localStorage.setItem('ht_diet_plan_text', fullReply.slice(0, 3000));
+        localStorage.setItem('ht_diet_plan_text', fullReply);
         appendChatMsg('ai', `✅ 營養目標已自動套用！\n熱量 ${targets.cal}kcal｜蛋白質 ${targets.protein}g｜碳水 ${targets.carb}g｜脂肪 ${targets.fat}g`);
         const planCard = document.getElementById('ai-diet-plan-card');
         const planText = document.getElementById('ai-diet-plan-text');
@@ -2667,7 +2667,7 @@ ${text.slice(0,2000)}` }]
     localStorage.setItem('ht_nutrient_targets', JSON.stringify(targets));
 
     // Also store diet plan text to show in nutrition page
-    localStorage.setItem('ht_diet_plan_text', text.slice(0, 1500));
+    localStorage.setItem('ht_diet_plan_text', text);
 
     alert('✅ 飲食建議已套用！請切換到飲食記錄頁查看目標攝取量。');
 
@@ -2692,7 +2692,12 @@ ${text.slice(0,2000)}` }]
 function loadSavedDietPlan() {
   const plan = localStorage.getItem('ht_diet_plan_text');
   if (plan) {
-    document.getElementById('ai-diet-plan-text').textContent = plan;
+    const clean = plan.replace('TARGETS:', '').replace(/\{[^}]+\}/g, '').trim();
+    const rendered = clean
+      .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+      .replace(/#{3,4} (.*)/g, '<div style="font-weight:700;margin:8px 0 3px">$1</div>')
+      .replace(/\n/g, '<br>');
+    document.getElementById('ai-diet-plan-text').innerHTML = rendered;
     document.getElementById('ai-diet-plan-card').style.display = 'block';
   }
 }
