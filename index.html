@@ -1743,12 +1743,12 @@ function compactSets(sets) {
   const groups = {};
   sets.forEach(s => {
     const key = (s.label||'') + '|' + s.weight + '|' + s.reps;
-    if (!groups[key]) groups[key] = { label: s.label||'', weight: s.weight, reps: s.reps, count: 0 };
+    if (!groups[key]) groups[key] = { label: s.label||'', weight: s.weight, reps: s.reps, count: 0, displayW: s.displayW||'' };
     groups[key].count++;
   });
   return Object.values(groups).map(g => {
     const label = g.label ? `<span style="color:var(--text-dim);font-size:10px;margin-right:2px">${g.label}</span>` : '';
-    const weightStr = g.weight > 0 ? ` ${g.weight}kg` : '';
+    const weightStr = g.displayW ? ` ${g.displayW}` : (g.weight > 0 ? ` ${g.weight}kg` : '');
     return `<span class="set-badge">${label}${g.count}×${g.reps}${weightStr}</span>`;
   }).join('');
 }
@@ -1919,11 +1919,14 @@ async function editWorkoutRecord(id) {
         const lbl    = row.querySelector('.ew-label')   ? row.querySelector('.ew-label').value.trim()   : '';
         const nSets  = parseInt(row.querySelector('.ew-sets-n') ? row.querySelector('.ew-sets-n').value  : '1') || 1;
         const nReps  = parseInt(row.querySelector('.ew-reps')   ? row.querySelector('.ew-reps').value    : '0') || 0;
-        const w      = parseFloat(row.querySelector('.ew-weight') ? row.querySelector('.ew-weight').value : '0') || 0;
+        const rawW   = parseFloat(row.querySelector('.ew-weight') ? row.querySelector('.ew-weight').value : '0') || 0;
         const unit   = row.querySelector('.ew-unit')    ? row.querySelector('.ew-unit').value            : 'kg';
-        if (nReps > 0 || w > 0) {
+        // 統一換算成 kg 存入（與 saveWorkout 邏輯一致）
+        const weight = unit === 'lb' ? Math.round(rawW * 0.4536 * 10) / 10 : rawW;
+        const displayW = unit === 'lb' ? `${rawW}磅(${weight}kg)` : `${weight}`;
+        if (nReps > 0 || rawW > 0) {
           for (let i = 0; i < nSets; i++) {
-            sets.push({ label: lbl, weight: w, reps: nReps, unit });
+            sets.push({ label: lbl, weight, reps: nReps, unit, displayW });
           }
         }
       });
