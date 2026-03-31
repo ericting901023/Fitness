@@ -774,9 +774,9 @@
             <label>食物名稱</label>
             <input type="text" id="food-name" placeholder="例：水煮花椰菜">
           </div>
-          <div class="form-group" id="grams-group">
+          <div class="form-group" style="max-width:90px">
             <label>克數 (g)</label>
-            <input type="number" id="food-grams" placeholder="150">
+            <input type="number" id="food-grams" placeholder="選填">
           </div>
           <div class="form-group" style="max-width:90px">
             <label>份數</label>
@@ -1130,8 +1130,7 @@ function showApp() {
   });
   renderFoodLibrary();
   renderInbodyHistory();
-  // Init food input mode (default: total, hide grams)
-  document.getElementById('grams-group').style.display = 'none';
+  // Food input mode init - grams always visible as optional
   // Restore any unsaved draft (iOS Safari fix)
   setTimeout(restoreDraftFromLocal, 500);
 }
@@ -2078,7 +2077,7 @@ function toggleInputMode() {
   const isTotal = _foodInputMode === 'total';
   document.getElementById('input-mode-label').textContent = isTotal ? '輸入總量' : '每100g';
   document.getElementById('input-mode-btn').textContent = isTotal ? '切換為每100g' : '切換為總量';
-  document.getElementById('grams-group').style.display = isTotal ? 'none' : 'flex';
+  // grams always visible (optional in total mode)
   document.getElementById('cal-label').textContent = isTotal ? '熱量 (kcal)' : '熱量 (kcal/100g)';
   document.getElementById('protein-label').textContent = isTotal ? '蛋白質 (g)' : '蛋白質 (g/100g)';
   document.getElementById('carb-label').textContent = isTotal ? '碳水 (g)' : '碳水 (g/100g)';
