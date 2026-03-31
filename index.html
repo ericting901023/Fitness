@@ -1726,8 +1726,11 @@ async function saveWorkout() {
   if (!date) { alert('請選擇日期'); return; }
   const dayInfo = WORKOUT_DAYS[currentWorkoutDay];
   const exercises = [];
-  document.querySelectorAll('.exercise-block').forEach(block => {
-    const name = block.querySelector('.ex-name').value.trim();
+  const exerciseContainer = document.getElementById('exercise-inputs');
+  exerciseContainer.querySelectorAll('.exercise-block').forEach(block => {
+    const nameEl = block.querySelector('.ex-name');
+    if (!nameEl) return;
+    const name = nameEl.value.trim();
     if (!name) return;
     const sets = [];
     block.querySelectorAll('.set-row').forEach(row => {
@@ -1747,6 +1750,7 @@ async function saveWorkout() {
   });
 
   if (exercises.length === 0) { alert('請至少輸入一個動作名稱'); return; }
+  console.log('exercises to save:', JSON.stringify(exercises.slice(0,2)));
 
   const cardioType = document.getElementById('cardio-type')?.value || '';
   const cardioDuration = parseInt(document.getElementById('cardio-duration')?.value) || 0;
@@ -1778,9 +1782,11 @@ async function saveWorkout() {
     try {
       const { data: { session } } = await db.auth.getSession();
       if (session) { currentUser = session.user; }
-      else { alert('登入已過期，請重新整理頁面並登入'); return; }
-    } catch(e) { alert('網路錯誤，請稍後再試'); return; }
+      else { alert('❌ 登入已過期，請重新整理頁面並登入'); return; }
+    } catch(e) { alert('❌ 網路錯誤：' + e.message); return; }
   }
+  // Debug: show what we're about to save
+  console.log('Saving workout:', { date, exercises: exercises.length, user: currentUser?.id?.slice(0,8) });
 
   const insertData = {
     recorded_date: workoutEntry.recorded_date,
@@ -1802,8 +1808,8 @@ async function saveWorkout() {
     alert('✅ 訓練記錄已儲存！');
   } else {
     console.error('Workout save error:', error);
-    setSyncStatus('error', '✗ 儲存失敗：' + (error.message || JSON.stringify(error)));
-    alert('儲存失敗：' + (error.message || error.code || '請檢查網路連線'));
+    setSyncStatus('error', '✗ 儲存失敗');
+    alert('❌ 儲存失敗\n原因：' + (error.message || error.code || JSON.stringify(error)));
   }
 }
 
