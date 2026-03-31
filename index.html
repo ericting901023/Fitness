@@ -870,11 +870,7 @@
           </div>
         </div>
       </div>
-      <div class="mini-chart-card">
-        <div class="mini-chart-title">💪 訓練重量進步</div>
-        <div class="chart-tabs" id="mini-exercise-tabs" style="margin-bottom:8px"></div>
-        <div class="mini-chart-wrap"><canvas id="mini-workout"></canvas></div>
-      </div>
+
 
       <div class="card">
         <div class="card-header" style="cursor:pointer" onclick="toggleWorkoutHistory()">
@@ -2581,7 +2577,7 @@ async function buildDataContext() {
     (r.exercises||[]).forEach(ex => {
       if (!exerciseMap[ex.name]) exerciseMap[ex.name] = [];
       if (exerciseMap[ex.name].length < 2) {
-        const workSets = (ex.sets||[]).filter(s => s.label !== '熱身' && s.weight > 0);
+        const workSets = (ex.sets||[]).filter(s => (s.weight||0) > 0); // include warmup in volume
         const maxW = Math.max(0, ...(ex.sets||[]).map(s=>s.weight||0));
         const volume = workSets.reduce((sum, s) => sum + (s.weight||0) * (s.reps||0), 0);
         exerciseMap[ex.name].push({ date: r.recorded_date, maxW, volume: Math.round(volume) });
@@ -3009,7 +3005,7 @@ async function renderMiniWorkoutChart(records) {
   [...records].sort((a,b) => a.recorded_date.localeCompare(b.recorded_date)).forEach(r => {
     (r.exercises||[]).forEach(ex => {
       if (!exerciseMap[ex.name]) exerciseMap[ex.name] = [];
-      const workSets = (ex.sets||[]).filter(s => s.label !== '熱身' && (s.weight||0) > 0);
+      const workSets = (ex.sets||[]).filter(s => (s.weight||0) > 0); // include warmup in volume
       const maxW = Math.max(0, ...(ex.sets||[]).map(s => s.weight||0));
       const volume = Math.round(workSets.reduce((sum, s) => sum + (s.weight||0)*(s.reps||0), 0));
       if (maxW > 0) exerciseMap[ex.name].push({ date: r.recorded_date.slice(5), weight: maxW, volume });
@@ -3162,7 +3158,7 @@ async function renderAllCharts() {
   workoutRecs.forEach(r => {
     (r.exercises||[]).forEach(ex => {
       if (!exerciseMap[ex.name]) exerciseMap[ex.name] = [];
-      const workSets2 = (ex.sets||[]).filter(s => s.label !== '熱身' && (s.weight||0) > 0);
+      const workSets2 = (ex.sets||[]).filter(s => (s.weight||0) > 0); // include warmup
       const maxW = Math.max(0, ...(ex.sets||[]).map(s => s.weight||0));
       const volume2 = Math.round(workSets2.reduce((sum,s) => sum+(s.weight||0)*(s.reps||0), 0));
       if (maxW > 0) exerciseMap[ex.name].push({ date: r.recorded_date.slice(5), maxW, volume: volume2 });
