@@ -778,6 +778,10 @@
             <label>克數 (g)</label>
             <input type="number" id="food-grams" placeholder="150">
           </div>
+          <div class="form-group" style="max-width:90px">
+            <label>份數</label>
+            <input type="number" id="food-servings" placeholder="1" value="1" step="0.1" min="0.1" max="10">
+          </div>
           <div class="form-group">
             <label>餐別</label>
             <select id="food-meal"><option>早餐</option><option>午餐</option><option>晚餐</option><option>點心</option></select>
@@ -1120,7 +1124,10 @@ function showApp() {
   renderNutritionDay();
   renderWorkoutHistory();
   loadApiKey();
-  loadSavedDietPlan();
+  loadUserSettings().then(() => {
+    loadSavedDietPlan();
+    renderNutritionDay();
+  });
   renderFoodLibrary();
   renderInbodyHistory();
   // Init food input mode (default: total, hide grams)
@@ -1169,9 +1176,21 @@ async function dbUpsert(table, data) {
     setSyncStatus('synced', '✓ 已儲存（本機模式）');
     return;
   }
+  // Re-check session if currentUser is null (iOS Safari background kill)
+  if (!currentUser) {
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      if (session) { currentUser = session.user; }
+      else { setSyncStatus('error', '✗ 請重新登入'); return; }
+    } catch(e) { setSyncStatus('error', '✗ 網路錯誤，請重試'); return; }
+  }
   setSyncStatus('saving', '⟳ 同步中...');
   const { error } = await db.from(table).upsert({ ...data, user_id: currentUser.id }, { onConflict: 'user_id,recorded_date' });
-  if (error) { setSyncStatus('error', '✗ 同步失敗'); console.error(error); }
+  if (error) {
+    console.error('dbUpsert error:', error);
+    setSyncStatus('error', '✗ 同步失敗：' + (error.message || error.code));
+    alert('儲存失敗：' + (error.message || '請檢查網路連線'));
+  }
   else { setSyncStatus('synced', '✓ 已同步至所有裝置'); }
 }
 
@@ -1365,15 +1384,18 @@ async function addFoodRecord() {
     fat = Math.round((parseFloat(document.getElementById('food-fat').value) || 0) * ratio * 10) / 10;
   }
 
+  const servings = parseFloat(document.getElementById('food-servings').value) || 1;
   const entry = {
     id: Date.now(),
     user_id: currentUser.id,
     recorded_date: date,
-    food_name: name, grams: grams || 0, meal,
-    cal: Math.round(cal),
-    protein: Math.round(protein * 10) / 10,
-    carb: Math.round(carb * 10) / 10,
-    fat: Math.round(fat * 10) / 10,
+    food_name: servings !== 1 ? `${name} ×${servings}` : name,
+    grams: Math.round((grams || 0) * servings * 10) / 10,
+    meal,
+    cal: Math.round(cal * servings),
+    protein: Math.round(protein * servings * 10) / 10,
+    carb: Math.round(carb * servings * 10) / 10,
+    fat: Math.round(fat * servings * 10) / 10,
   };
 
   if (!SUPABASE_CONFIGURED) {
@@ -1395,56 +1417,104 @@ async function addFoodRecord() {
 
 function clearFoodForm() {
   ['food-name','food-grams','food-cal','food-protein','food-carb','food-fat'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('food-servings').value = '1';
   const s = document.getElementById('query-status');
   s.classList.remove('visible');
   s.style.color = 'var(--accent2)';
 }
 
 // ── Food Library ──
-function renderFoodLibrary() {
-  const lib = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
+async function renderFoodLibrary() {
   const el = document.getElementById('food-library-btns');
+  el.innerHTML = '<span style="font-size:12px;color:var(--text-muted)">載入中...</span>';
+  let lib = [];
+  if (SUPABASE_CONFIGURED && currentUser) {
+    const { data } = await db.from('food_library').select('*').eq('user_id', currentUser.id).order('name');
+    lib = data || [];
+  } else {
+    lib = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
+  }
   if (!lib.length) {
     el.innerHTML = '<span style="font-size:12px;color:var(--text-muted)">尚無常用食物，新增食物後點「儲存到食物庫」</span>';
     return;
   }
-  el.innerHTML = lib.map((f,i) => `
-    <button class="food-lib-btn" onclick="loadFromLibrary(${i})">
+  el.innerHTML = lib.map((f, i) => `
+    <button class="food-lib-btn" onclick="loadFromLibrary(${i}, ${JSON.stringify(f).replace(/"/g,'&quot;')})">
       ${f.name}
-      <span class="del-lib" onclick="event.stopPropagation();deleteFromLibrary(${i})">✕</span>
+      <span class="del-lib" onclick="event.stopPropagation();deleteFromLibrary('${f.name}', ${f.id||0})">✕</span>
     </button>`).join('');
+  window._foodLibCache = lib;
 }
 
-function saveToFoodLibrary() {
+async function saveToFoodLibrary() {
   const name = document.getElementById('food-name').value.trim();
-  const cal = document.getElementById('food-cal').value;
-  const protein = document.getElementById('food-protein').value;
-  const carb = document.getElementById('food-carb').value;
-  const fat = document.getElementById('food-fat').value;
   if (!name) { alert('請先輸入食物名稱'); return; }
-  const lib = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
-  if (lib.find(f => f.name === name)) { alert('食物庫已有此項目'); return; }
-  lib.push({ name, cal100: parseFloat(cal)||0, protein100: parseFloat(protein)||0, carb100: parseFloat(carb)||0, fat100: parseFloat(fat)||0 });
-  localStorage.setItem('ht_food_library', JSON.stringify(lib));
+
+  // Calculate per-100g values based on current input mode
+  let cal100, protein100, carb100, fat100;
+  if (_foodInputMode === 'total') {
+    const grams = parseFloat(document.getElementById('food-grams').value) || 100;
+    const ratio = 100 / grams;
+    cal100 = Math.round((parseFloat(document.getElementById('food-cal').value)||0) * ratio);
+    protein100 = Math.round((parseFloat(document.getElementById('food-protein').value)||0) * ratio * 10) / 10;
+    carb100 = Math.round((parseFloat(document.getElementById('food-carb').value)||0) * ratio * 10) / 10;
+    fat100 = Math.round((parseFloat(document.getElementById('food-fat').value)||0) * ratio * 10) / 10;
+  } else {
+    cal100 = parseFloat(document.getElementById('food-cal').value)||0;
+    protein100 = parseFloat(document.getElementById('food-protein').value)||0;
+    carb100 = parseFloat(document.getElementById('food-carb').value)||0;
+    fat100 = parseFloat(document.getElementById('food-fat').value)||0;
+  }
+
+  if (SUPABASE_CONFIGURED && currentUser) {
+    const { error } = await db.from('food_library').upsert(
+      { user_id: currentUser.id, name, cal100, protein100, carb100, fat100 },
+      { onConflict: 'user_id,name' }
+    );
+    if (error) { alert('儲存失敗：' + error.message); return; }
+  } else {
+    const lib = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
+    if (!lib.find(f => f.name === name)) {
+      lib.push({ name, cal100, protein100, carb100, fat100 });
+      localStorage.setItem('ht_food_library', JSON.stringify(lib));
+    }
+  }
   renderFoodLibrary();
   setSyncStatus('synced', `✓「${name}」已儲存到食物庫`);
 }
 
-function loadFromLibrary(i) {
-  const lib = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
-  const f = lib[i];
+function loadFromLibrary(i, f) {
+  if (!f) {
+    const lib = window._foodLibCache || [];
+    f = lib[i];
+  }
   if (!f) return;
   document.getElementById('food-name').value = f.name;
-  document.getElementById('food-cal').value = f.cal100 || '';
-  document.getElementById('food-protein').value = f.protein100 || '';
-  document.getElementById('food-carb').value = f.carb100 || '';
-  document.getElementById('food-fat').value = f.fat100 || '';
+  if (_foodInputMode === 'per100') {
+    document.getElementById('food-cal').value = f.cal100 || '';
+    document.getElementById('food-protein').value = f.protein100 || '';
+    document.getElementById('food-carb').value = f.carb100 || '';
+    document.getElementById('food-fat').value = f.fat100 || '';
+  } else {
+    // Total mode: calc based on grams (default 100g)
+    const grams = parseFloat(document.getElementById('food-grams').value) || 100;
+    const ratio = grams / 100;
+    document.getElementById('food-cal').value = Math.round((f.cal100||0) * ratio) || '';
+    document.getElementById('food-protein').value = Math.round((f.protein100||0) * ratio * 10) / 10 || '';
+    document.getElementById('food-carb').value = Math.round((f.carb100||0) * ratio * 10) / 10 || '';
+    document.getElementById('food-fat').value = Math.round((f.fat100||0) * ratio * 10) / 10 || '';
+  }
 }
 
-function deleteFromLibrary(i) {
-  const lib = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
-  lib.splice(i, 1);
-  localStorage.setItem('ht_food_library', JSON.stringify(lib));
+async function deleteFromLibrary(name, id) {
+  if (!confirm(`刪除「${name}」？`)) return;
+  if (SUPABASE_CONFIGURED && currentUser) {
+    await db.from('food_library').delete().eq('user_id', currentUser.id).eq('name', name);
+  } else {
+    const lib = JSON.parse(localStorage.getItem('ht_food_library') || '[]');
+    const idx = lib.findIndex(f => f.name === name);
+    if (idx >= 0) { lib.splice(idx, 1); localStorage.setItem('ht_food_library', JSON.stringify(lib)); }
+  }
   renderFoodLibrary();
 }
 
@@ -1848,6 +1918,13 @@ function restoreDraftFromLocal() {
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
     saveDraftToLocal();
+  } else if (document.visibilityState === 'visible') {
+    // Refresh session when coming back from background (iOS Safari)
+    if (SUPABASE_CONFIGURED && db) {
+      db.auth.getSession().then(({ data: { session } }) => {
+        if (session) { currentUser = session.user; }
+      }).catch(() => {});
+    }
   }
 });
 
@@ -1859,6 +1936,30 @@ setInterval(() => {
   if (currentUser) saveDraftToLocal();
 }, 10000);
 
+
+
+// ════════════════════════════════════════════
+// USER SETTINGS (Supabase sync)
+// ════════════════════════════════════════════
+async function saveUserSetting(key, value) {
+  if (SUPABASE_CONFIGURED && currentUser) {
+    const update = { user_id: currentUser.id, updated_at: new Date().toISOString() };
+    update[key] = value;
+    await db.from('user_settings').upsert(update, { onConflict: 'user_id' });
+  }
+  // Also keep in localStorage as cache
+  localStorage.setItem('ht_' + key, typeof value === 'string' ? value : JSON.stringify(value));
+}
+
+async function loadUserSettings() {
+  if (SUPABASE_CONFIGURED && currentUser) {
+    const { data } = await db.from('user_settings').select('*').eq('user_id', currentUser.id).single();
+    if (data) {
+      if (data.nutrient_targets) localStorage.setItem('ht_nutrient_targets', JSON.stringify(data.nutrient_targets));
+      if (data.diet_plan_text) localStorage.setItem('ht_diet_plan_text', data.diet_plan_text);
+    }
+  }
+}
 
 // ════════════════════════════════════════════
 // INBODY RECORDS
@@ -2605,8 +2706,10 @@ ${dataCtx}`;
       if (targetsMatch) {
         const targets = { cal: +targetsMatch[1], protein: +targetsMatch[2], carb: +targetsMatch[3], fat: +targetsMatch[4] };
         localStorage.setItem('ht_nutrient_targets', JSON.stringify(targets));
+        saveUserSetting('nutrient_targets', targets);
         const cleanReply = fullReply.replace(/TARGETS:[^\n]*/g, '').trim();
         localStorage.setItem('ht_diet_plan_text', cleanReply);
+        saveUserSetting('diet_plan_text', cleanReply);
         appendChatMsg('ai', `✅ 營養目標已自動套用！\n熱量 ${targets.cal}kcal｜蛋白質 ${targets.protein}g｜碳水 ${targets.carb}g｜脂肪 ${targets.fat}g`);
         loadSavedDietPlan();
       } else {
@@ -2736,6 +2839,7 @@ ${text.slice(0,2000)}` }]
     if (!match) throw new Error('無法解析');
     const targets = JSON.parse(match[0]);
     localStorage.setItem('ht_nutrient_targets', JSON.stringify(targets));
+        saveUserSetting('nutrient_targets', targets);
 
     // Also store diet plan text to show in nutrition page
     localStorage.setItem('ht_diet_plan_text', text);
@@ -2754,6 +2858,7 @@ ${text.slice(0,2000)}` }]
     const planText = document.getElementById('ai-diet-plan-text');
     const cleanText = text.replace(/TARGETS:[^\n]*/g, '').trim();
     localStorage.setItem('ht_diet_plan_text', cleanText);
+    saveUserSetting('diet_plan_text', cleanText);
     loadSavedDietPlan();
     planCard.style.display = 'block';
   } catch(e) {
