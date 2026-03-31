@@ -772,7 +772,7 @@
         <div class="form-row">
           <div class="form-group" style="flex:2;min-width:160px">
             <label>食物名稱</label>
-            <input type="text" id="food-name" placeholder="例：水煮花椰菜">
+            <input type="text" id="food-name" placeholder="例：水煮花椰菜" oninput="lookupFoodLibrary(this.value)">
           </div>
           <div class="form-group" style="max-width:90px">
             <label>克數 (g)</label>
@@ -1362,13 +1362,54 @@ async function addFoodRecord() {
 
   let cal, protein, carb, fat, grams;
 
+  // Auto-lookup from food library if nutrients not filled
+  const calInput = parseFloat(document.getElementById('food-cal').value) || 0;
+  const proteinInput = parseFloat(document.getElementById('food-protein').value) || 0;
+  const noNutrients = !calInput && !proteinInput;
+
+  if (noNutrients) {
+    // Try to find in food library cache
+    const lib = window._foodLibCache || [];
+    const match = lib.find(f => f.name === name || f.name.toLowerCase() === name.toLowerCase());
+    if (match) {
+      const gramsInput = parseFloat(document.getElementById('food-grams').value) || 0;
+      const servingsInput = parseFloat(document.getElementById('food-servings').value) || 1;
+      let ratio;
+      if (gramsInput > 0) {
+        // User entered grams - calculate servings from grams
+        ratio = gramsInput / 100;
+        grams = gramsInput;
+        // Auto-fill servings if not set
+        const defaultGrams = 100; // base serving = 100g
+        document.getElementById('food-servings').value = Math.round(gramsInput / defaultGrams * 10) / 10;
+      } else {
+        // User entered servings only - calculate grams
+        ratio = servingsInput;
+        grams = Math.round(ratio * 100);
+        document.getElementById('food-grams').value = grams;
+      }
+      cal = Math.round((match.cal100 || 0) * ratio);
+      protein = Math.round((match.protein100 || 0) * ratio * 10) / 10;
+      carb = Math.round((match.carb100 || 0) * ratio * 10) / 10;
+      fat = Math.round((match.fat100 || 0) * ratio * 10) / 10;
+      // Fill in the UI fields too
+      document.getElementById('food-cal').value = cal;
+      document.getElementById('food-protein').value = protein;
+      document.getElementById('food-carb').value = carb;
+      document.getElementById('food-fat').value = fat;
+    } else {
+      alert('食物庫找不到「' + name + '」，請先輸入營養素或自動查詢');
+      return;
+    }
+  }
+
   if (_foodInputMode === 'total') {
     // Direct total input
-    cal = parseFloat(document.getElementById('food-cal').value) || 0;
-    protein = parseFloat(document.getElementById('food-protein').value) || 0;
-    carb = parseFloat(document.getElementById('food-carb').value) || 0;
-    fat = parseFloat(document.getElementById('food-fat').value) || 0;
-    grams = parseFloat(document.getElementById('food-grams').value) || 0;
+    cal = cal ?? (parseFloat(document.getElementById('food-cal').value) || 0);
+    protein = protein ?? (parseFloat(document.getElementById('food-protein').value) || 0);
+    carb = carb ?? (parseFloat(document.getElementById('food-carb').value) || 0);
+    fat = fat ?? (parseFloat(document.getElementById('food-fat').value) || 0);
+    grams = grams ?? (parseFloat(document.getElementById('food-grams').value) || 0);
     if (!cal && !protein) { alert('請至少輸入熱量或蛋白質'); return; }
   } else {
     // Per-100g mode
@@ -2124,6 +2165,29 @@ function toggleBodyHistory() {
   const isHidden = el.style.display === 'none';
   el.style.display = isHidden ? 'block' : 'none';
   icon.textContent = isHidden ? '▲' : '▼';
+}
+
+
+function lookupFoodLibrary(name) {
+  const lib = window._foodLibCache || [];
+  if (!name || !lib.length) return;
+  const match = lib.find(f => f.name.toLowerCase() === name.toLowerCase());
+  const status = document.getElementById('query-status');
+  if (match) {
+    status.textContent = `📚 食物庫找到「${match.name}」— 輸入克數或份數後直接加入即可`;
+    status.style.color = 'var(--accent)';
+    status.classList.add('visible');
+  } else {
+    // Partial match suggestion
+    const partial = lib.find(f => f.name.toLowerCase().includes(name.toLowerCase()));
+    if (partial) {
+      status.textContent = `💡 食物庫有相似項目：${partial.name}`;
+      status.style.color = 'var(--accent2)';
+      status.classList.add('visible');
+    } else {
+      status.classList.remove('visible');
+    }
+  }
 }
 
 // ════════════════════════════════════════════
