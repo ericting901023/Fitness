@@ -1128,7 +1128,8 @@ function showApp() {
   renderInbodyHistory();
   // Food input mode init - grams always visible as optional
   // Restore any unsaved draft (iOS Safari fix)
-  setTimeout(restoreDraftFromLocal, 500);
+  restoreDraftFromLocal(); // Restore immediately
+setTimeout(restoreDraftFromLocal, 1000); // Also retry after 1s (for dynamic elements)
 }
 
 function showAuthScreen() {
@@ -1907,6 +1908,8 @@ function saveDraftToLocal() {
       if (name) workoutExercises.push({ name, sets });
     });
 
+    // Save InBody form if open
+    const ibFormOpen = document.getElementById('inbody-form')?.style.display !== 'none';
     const draft = {
       bodyDate: document.getElementById('body-date')?.value,
       bodyMorning: document.getElementById('body-morning')?.value,
@@ -1914,12 +1917,32 @@ function saveDraftToLocal() {
       bodyWaist: document.getElementById('body-waist')?.value,
       bodyNote: document.getElementById('body-note')?.value,
       nutritionDate: document.getElementById('nutrition-date')?.value,
+      foodName: document.getElementById('food-name')?.value,
+      foodGrams: document.getElementById('food-grams')?.value,
+      foodServings: document.getElementById('food-servings')?.value,
+      foodCal: document.getElementById('food-cal')?.value,
+      foodProtein: document.getElementById('food-protein')?.value,
+      foodCarb: document.getElementById('food-carb')?.value,
+      foodFat: document.getElementById('food-fat')?.value,
+      foodMeal: document.getElementById('food-meal')?.value,
       workoutDate: document.getElementById('workout-date')?.value,
       workoutDay: currentWorkoutDay,
       workoutExercises: workoutExercises.length ? workoutExercises : null,
       cardioType: document.getElementById('cardio-type')?.value,
       cardioDuration: document.getElementById('cardio-duration')?.value,
       cardioCalories: document.getElementById('cardio-calories')?.value,
+      ibFormOpen,
+      ibDate: document.getElementById('ib-date')?.value,
+      ibWeight: document.getElementById('ib-weight')?.value,
+      ibMuscle: document.getElementById('ib-muscle-in')?.value,
+      ibFatpct: document.getElementById('ib-fatpct-in')?.value,
+      ibFatkg: document.getElementById('ib-fatkg-in')?.value,
+      ibWater: document.getElementById('ib-water-in')?.value,
+      ibBmr: document.getElementById('ib-bmr-in')?.value,
+      ibVisceral: document.getElementById('ib-visceral-in')?.value,
+      ibWaist: document.getElementById('ib-waist-in')?.value,
+      ibScore: document.getElementById('ib-score-in')?.value,
+      ibNote: document.getElementById('ib-note-in')?.value,
     };
     localStorage.setItem('ht_draft', JSON.stringify(draft));
   } catch(e) {}
@@ -1928,21 +1951,35 @@ function saveDraftToLocal() {
 function restoreDraftFromLocal() {
   try {
     const d = JSON.parse(localStorage.getItem('ht_draft') || '{}');
+    if (!Object.keys(d).length) return;
+
+    // Body fields
     if (d.bodyDate) document.getElementById('body-date').value = d.bodyDate;
     if (d.bodyMorning) document.getElementById('body-morning').value = d.bodyMorning;
     if (d.bodyEvening) document.getElementById('body-evening').value = d.bodyEvening;
     if (d.bodyWaist) document.getElementById('body-waist').value = d.bodyWaist;
     if (d.bodyNote) document.getElementById('body-note').value = d.bodyNote;
+
+    // Nutrition fields
     if (d.nutritionDate) {
       document.getElementById('nutrition-date').value = d.nutritionDate;
       renderNutritionDay();
     }
+    if (d.foodName) document.getElementById('food-name').value = d.foodName;
+    if (d.foodGrams) document.getElementById('food-grams').value = d.foodGrams;
+    if (d.foodServings) document.getElementById('food-servings').value = d.foodServings;
+    if (d.foodCal) document.getElementById('food-cal').value = d.foodCal;
+    if (d.foodProtein) document.getElementById('food-protein').value = d.foodProtein;
+    if (d.foodCarb) document.getElementById('food-carb').value = d.foodCarb;
+    if (d.foodFat) document.getElementById('food-fat').value = d.foodFat;
+    if (d.foodMeal) document.getElementById('food-meal').value = d.foodMeal;
+
+    // Workout fields
     if (d.workoutDate) document.getElementById('workout-date').value = d.workoutDate;
 
     // Restore workout exercises if same day
     if (d.workoutExercises && d.workoutExercises.length && d.workoutDay === currentWorkoutDay) {
       const container = document.getElementById('exercise-inputs');
-      // Only restore if user hasn't already filled in weights
       const hasWeights = Array.from(container.querySelectorAll('.sr-weight')).some(el => el.value);
       if (!hasWeights) {
         exerciseCount = 0;
@@ -1954,12 +1991,28 @@ function restoreDraftFromLocal() {
           }));
           addExerciseInput(ex.name, prefillSets);
         });
-        // Also restore cardio
-        if (d.cardioType) document.getElementById('cardio-type').value = d.cardioType;
-        if (d.cardioDuration) document.getElementById('cardio-duration').value = d.cardioDuration;
-        if (d.cardioCalories) document.getElementById('cardio-calories').value = d.cardioCalories;
       }
     }
+    if (d.cardioType) { const el = document.getElementById('cardio-type'); if (el) el.value = d.cardioType; }
+    if (d.cardioDuration) { const el = document.getElementById('cardio-duration'); if (el) el.value = d.cardioDuration; }
+    if (d.cardioCalories) { const el = document.getElementById('cardio-calories'); if (el) el.value = d.cardioCalories; }
+
+    // InBody form
+    if (d.ibFormOpen) {
+      const form = document.getElementById('inbody-form');
+      if (form) form.style.display = 'block';
+    }
+    if (d.ibDate) { const el = document.getElementById('ib-date'); if (el) el.value = d.ibDate; }
+    if (d.ibWeight) { const el = document.getElementById('ib-weight'); if (el) el.value = d.ibWeight; }
+    if (d.ibMuscle) { const el = document.getElementById('ib-muscle-in'); if (el) el.value = d.ibMuscle; }
+    if (d.ibFatpct) { const el = document.getElementById('ib-fatpct-in'); if (el) el.value = d.ibFatpct; }
+    if (d.ibFatkg) { const el = document.getElementById('ib-fatkg-in'); if (el) el.value = d.ibFatkg; }
+    if (d.ibWater) { const el = document.getElementById('ib-water-in'); if (el) el.value = d.ibWater; }
+    if (d.ibBmr) { const el = document.getElementById('ib-bmr-in'); if (el) el.value = d.ibBmr; }
+    if (d.ibVisceral) { const el = document.getElementById('ib-visceral-in'); if (el) el.value = d.ibVisceral; }
+    if (d.ibWaist) { const el = document.getElementById('ib-waist-in'); if (el) el.value = d.ibWaist; }
+    if (d.ibScore) { const el = document.getElementById('ib-score-in'); if (el) el.value = d.ibScore; }
+    if (d.ibNote) { const el = document.getElementById('ib-note-in'); if (el) el.value = d.ibNote; }
   } catch(e) {}
 }
 
@@ -1979,11 +2032,14 @@ document.addEventListener('visibilitychange', () => {
 
 // Also save on pagehide (more reliable on iOS)
 window.addEventListener('pagehide', saveDraftToLocal);
+window.addEventListener('beforeunload', saveDraftToLocal);
+// iOS: save on blur (when user switches app, window loses focus)
+window.addEventListener('blur', saveDraftToLocal);
 
 // Auto-save draft every 10 seconds while on page
 setInterval(() => {
-  if (currentUser) saveDraftToLocal();
-}, 10000);
+  saveDraftToLocal(); // Auto-save every 3s regardless of login state
+}, 3000);
 
 
 
